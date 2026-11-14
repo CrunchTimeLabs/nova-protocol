@@ -29,3 +29,6 @@ Thumbs.db
 # Entorno local
 .env
 *.log
+
+# Planes y trabajo local (ver AGENTS.md)
+local/
