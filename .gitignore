@@ -32,3 +32,6 @@ Thumbs.db
 
 # Planes y trabajo local (ver AGENTS.md)
 local/
+
+# Marcadores de carpeta vacía (no se versionan)
+.gitkeep

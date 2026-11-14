@@ -4,6 +4,7 @@ extends RefCounted
 
 
 const MENU := "res://scenes/menu.tscn"
+const EXPEDITION_LEVEL := "res://scenes/expedition_level.tscn"
 const CARGO_HOLD_LAB := "res://scenes/cargo_hold_lab.tscn"
 const CIRCUIT_LAB := "res://scenes/circuit_lab.tscn"
 const COUNTDOWN_LAB := "res://scenes/countdown_lab.tscn"

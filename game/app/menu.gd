@@ -100,7 +100,7 @@ func _add_button(text: String, handler: Callable) -> void:
 
 
 func _on_start() -> void:
-	pass    # sin juego todavía: enlazar con SceneRoutes cuando exista
+	SceneRoutes.go_to(get_tree(), SceneRoutes.EXPEDITION_LEVEL)
 
 
 func _on_exit() -> void:
