@@ -20,6 +20,7 @@ const LABS: Array = [
 	["Wiring", SceneRoutes.WIRING_LAB],
 	["Traffic light", SceneRoutes.TRAFFIC_LIGHT_LAB],
 	["Orbit", SceneRoutes.ORBIT_LAB],
+	["Split screen", SceneRoutes.MISSION_LOBBY],
 ]
 
 var _title: Label
