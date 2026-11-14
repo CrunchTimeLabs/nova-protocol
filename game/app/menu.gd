@@ -1,19 +1,31 @@
 extends Control
-## Menú inicial: Start, Labs (selección de personaje) y Exit.
+## Menú inicial: Start, Labs (una lista de features) y Exit.
 
-
-signal player_selected(player_id: String)
 
 const BACKGROUND := Color(0.02, 0.03, 0.07)
 const MENU_WIDTH := 360.0
 const SEPARATION := 12
-const PLAYERS: Array[String] = ["jim", "jen", "may", "vla"]
-
-var selected_player: String = ""
+const LAB_COLUMNS := 3
+const BACK_MARGIN := Vector2(16, 16)
+## Labs de las features: [título, ruta de la escena].
+const LABS: Array = [
+	["Movement", SceneRoutes.MOVEMENT_LAB],
+	["Circuit", SceneRoutes.CIRCUIT_LAB],
+	["Resource meter", SceneRoutes.RESOURCE_METER_LAB],
+	["Cargo hold", SceneRoutes.CARGO_HOLD_LAB],
+	["Drag drop", SceneRoutes.DRAG_DROP_LAB],
+	["Maze", SceneRoutes.MAZE_LAB],
+	["Countdown", SceneRoutes.COUNTDOWN_LAB],
+	["Precision", SceneRoutes.PRECISION_LAB],
+	["Wiring", SceneRoutes.WIRING_LAB],
+	["Traffic light", SceneRoutes.TRAFFIC_LIGHT_LAB],
+	["Orbit", SceneRoutes.ORBIT_LAB],
+]
 
 var _title: Label
 var _column: VBoxContainer
-var _buttons: VBoxContainer
+var _buttons: GridContainer
+var _back: Button
 
 
 func _ready() -> void:
@@ -36,9 +48,16 @@ func _ready() -> void:
 	_title.add_theme_font_size_override("font_size", 32)
 	_column.add_child(_title)
 
-	_buttons = VBoxContainer.new()
-	_buttons.add_theme_constant_override("separation", SEPARATION)
+	_buttons = GridContainer.new()
+	_buttons.add_theme_constant_override("h_separation", SEPARATION)
+	_buttons.add_theme_constant_override("v_separation", SEPARATION)
 	_column.add_child(_buttons)
+
+	_back = Button.new()
+	_back.text = "Back"
+	_back.position = BACK_MARGIN
+	_back.pressed.connect(_show_main)
+	add_child(_back)
 
 	_show_main()
 
@@ -49,7 +68,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _show_main() -> void:
-	_show_menu("NOVA PROTOCOL")
+	_show_menu("NOVA PROTOCOL", 1)
 	_add_button("Start", _on_start)
 	_add_button("Labs", _show_labs)
 	if not OS.has_feature("web"):          # en navegador no hay a dónde "salir"
@@ -57,14 +76,15 @@ func _show_main() -> void:
 
 
 func _show_labs() -> void:
-	_show_menu("LABS")
-	for player_id: String in PLAYERS:
-		_add_button(player_id, _on_player.bind(player_id))
-	_add_button("Back", _show_main)
+	_show_menu("LABS", LAB_COLUMNS)
+	for entry: Array in LABS:
+		_add_button(str(entry[0]), SceneRoutes.go_to.bind(get_tree(), str(entry[1])))
 
 
-func _show_menu(title_text: String) -> void:
+func _show_menu(title_text: String, columns: int) -> void:
 	_title.text = title_text
+	_buttons.columns = columns
+	_back.visible = title_text != "NOVA PROTOCOL"
 	for child: Node in _buttons.get_children():
 		_buttons.remove_child(child)
 		child.queue_free()
@@ -77,11 +97,6 @@ func _add_button(text: String, handler: Callable) -> void:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.pressed.connect(handler)
 	_buttons.add_child(button)
-
-
-func _on_player(player_id: String) -> void:
-	selected_player = player_id
-	player_selected.emit(player_id)
 
 
 func _on_start() -> void:
