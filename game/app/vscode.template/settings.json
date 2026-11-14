@@ -1,0 +1,6 @@
+{
+    "git.openRepositoryInParentFolders": "always",
+    "files.exclude": {
+        "**/*.uid": true
+    }
+}

@@ -1,0 +1,31 @@
+# Godot 4+
+.godot/
+.nomedia
+
+# Exportación
+export_presets.cfg
+export/
+build/
+*.apk
+*.aab
+*.pck
+*.zip
+
+# Traducciones generadas
+*.translation
+
+# Mono / C#
+.mono/
+data_*/
+mono_crash.*.json
+
+# Editor / SO
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Entorno local
+.env
+*.log
