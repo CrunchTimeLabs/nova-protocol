@@ -30,6 +30,15 @@ Referencia externa (solo lectura): `../game-mechanics/` (catálogo de mecánicas
 11. **Backend y visual se piden y se entregan por separado.** Cuando pidan agregar, implementar, crear, construir o términos similares una feature:
     - **Backend (lógica/dominio):** se entrega **solo la lógica**, sin `view/`, escenas, labs ni nodos. Debe **reutilizar los elementos básicos ya construidos** (`toolkit/`: `StateMachine`, `ResourceMeter`, `GameRandom`, etc.) en lugar de reescribirlos; el propósito es **evaluar la feature**, así que no se añade nada más allá de lo que la prueba. Si falta un elemento básico, se crea genérico en `toolkit/` (regla 1) y se reutiliza.
     - **Visual:** se agrega **por separado** (otra petición, otro cambio), **sin lógica de backend**: solo lee el dominio, emite señales y delega acciones (regla 2). Su petición debe **especificar a qué feature de backend/lógica se conecta**; si no lo dice, se pregunta antes de implementar. No se inventa un backend para una vista.
+12. **Premisa: reutilizar primero, crear solo lo diferente.** Antes de escribir una clase, se buscan componentes existentes (`toolkit/*/README.md` y `features/*/README.md`, luego el código) y se reutilizan o se extienden por parámetro, contrato o composición. Solo se crea uno nuevo cuando el comportamiento es realmente distinto, y se anota en su README por qué no servía el existente. No se duplica un componente con otro nombre ni se copia código entre áreas: si dos lo necesitan, sube al `toolkit/`.
+13. **Cada área y feature tiene su README.** `toolkit/<área>/README.md` y `features/<feature>/README.md` son obligatorios y van en el mismo cambio que la clase (sin README, la feature no está terminada). Es la forma de que otros la reconozcan y la reutilicen sin catálogo global. Formato fijo y breve, estas secciones en este orden:
+    1. **Propósito:** una o dos líneas.
+    2. **Escenarios:** los `DADO / CUANDO / ENTONCES` del plan, resumidos.
+    3. **Qué reutilizar:** clases públicas y para qué sirven.
+    4. **Depende de:** áreas del toolkit que usa.
+    5. **Cubierto por:** lab, nivel y pruebas que lo ejercitan.
+
+    Solo lo edita quien toca esa carpeta; si cambia el comportamiento, se actualiza en el mismo cambio. Los labs y niveles de `app/` no lo llevan (solo componen).
 
 ### Estructura de carpetas (dentro de `game/`)
 
@@ -100,13 +109,13 @@ Pasos:
    3. **Después:** se informa, se pide una revisión más del plan y **se pide permiso para implementar**. No se implementa hasta recibirlo.
 
    **Puerta de implementación:** una `D#` se puede implementar cuando está `[x]` **y** no entra en conflicto con otras. Se implementa solo lo que se apoya en decisiones resueltas y sin conflicto; lo que dependa de una `D#` pendiente **no se implementa** (ni con valor por defecto) y se informa qué `D#` lo bloquean. Si el usuario confirma expresamente un valor por defecto, cuenta como resuelto. Si aparece una duda nueva al implementar, se añade como `D#`, se detiene lo que dependa de ella y se pregunta.
-1. Con las decisiones resueltas, reutilizar lo que ya exista y nombrar la mecánica con vocabulario genérico; decidir su capa de código (regla 1) y de construcción (tabla).
+1. Con las decisiones resueltas, **buscar primero qué existe** (README de `toolkit/*` y `features/*`, regla 12), reutilizarlo y nombrar la mecánica con vocabulario genérico; decidir su capa de código (regla 1) y de construcción (tabla).
 2. Modelar con enums y constantes propias; dominio primero, sin nodos.
 3. Escribir `tests/<ruta espejo>/test_<clase>.gd` junto con la clase: primero los usos mínimos, luego límites y rechazos.
 4. Conectarla desde su dueño de forma explícita (método, estado o señal), sin bus global.
 5. Si añade estado, ampliar `snapshot()` / `restore()` y probar el viaje por JSON.
 6. Vista: solo si se pidió, en un cambio aparte y con el backend al que se conecta indicado (regla 11); pequeña, solo lee el dominio.
-7. Registrar escena y menú si hay vista nueva. **No se actualiza ningún markdown global** (README, índices, catálogos de features, `DIAGRAMAS.md`): es un proyecto colaborativo y esos archivos compartidos generan conflictos de merge. Si la feature necesita documentación, va en un `README.md` propio dentro de su carpeta `features/<feature>/`, que nadie más edita.
+7. Escribir el README del área o feature (regla 13). Registrar escena y menú si hay vista nueva. **No se actualiza ningún markdown global** (README general, índices, catálogos de features, `DIAGRAMAS.md`): es un proyecto colaborativo y esos archivos compartidos generan conflictos de merge. Escribir el `README.md` de la feature o área (regla 13), que nadie más edita.
 
 **Quitar una mecánica o nivel:** se borra su carpeta (con `view/`), su espejo en `tests/`, su laboratorio o nivel en `app/` y su escena, su ruta y su botón del menú; antes se revisa que nada más la use.
 
