@@ -70,3 +70,29 @@ func test_damage_destroys_the_ship() -> void:
     _expedition.hull = ResourceMeter.new(1.0, 1.0)
     var flight: Flight = Flight.new(_expedition, _catalog.planet("marte"), 2, false)
     check_equal(_fly(flight, 0), Flight.Status.DESTROYED, "con 1 de integridad, Marte destruye la nave")
+
+
+func test_meteor_field_has_only_rocks_fewer_than_the_moon_and_still_hurts() -> void:
+    var moon: PlanetSpec = _catalog.planet("luna")
+    var seconds: float = 30.0
+    var counts: Array[int] = []
+    for density: float in [moon.density, 0.5]:
+        var flight: Flight = Flight.meteor_field(_new_ready_expedition(), moon, density, seconds)
+        var spawned: int = 0
+        var seen_other: bool = false
+        var status: Flight.Status = Flight.Status.RUNNING
+        while status == Flight.Status.RUNNING:
+            var before: int = flight.rocks.size()
+            status = flight.step(1.0 / 60.0, Vector2.ZERO, false)
+            spawned += maxi(flight.rocks.size() - before, 0)
+            seen_other = seen_other or not (flight.orbs.is_empty() and flight.lasers.is_empty() and flight.waves.is_empty() and flight.fronts.is_empty())
+        check(not seen_other, "solo meteoritos (densidad %.1f)" % density)
+        counts.append(spawned)
+    check(counts[1] > 0, "sí caen rocas")
+    check(counts[1] < counts[0], "con menos densidad caen menos rocas")
+    var hurt: Expedition = _new_ready_expedition()
+    var field: Flight = Flight.meteor_field(hurt, moon, 0.5, seconds)
+    var status: Flight.Status = Flight.Status.RUNNING
+    while status == Flight.Status.RUNNING:
+        status = field.step(1.0 / 60.0, Vector2.ZERO, false)
+    check(hurt.hull.current < float(hurt.max_hull()), "quedarse quieto recibe daño de rocas")

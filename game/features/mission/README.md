@@ -15,4 +15,4 @@ Misiones cooperativas para jugar en pantalla dividida (o LAN): Órbita (piloto +
 `toolkit/session`, `net`, `dynamics`, `puzzle`, `circuit`.
 
 ## Cubierto por
-Lab `Split screen`; `tests/features/mission/`.
+Lab `Split screen` y nivel `app/levels/meteor_mission.gd` (Órbita con el piloto esquivando meteoritos, de `toolkit/dodge`, y un `SplitHud`); `tests/features/mission/`.

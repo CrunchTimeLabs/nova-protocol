@@ -11,7 +11,7 @@ func _init() -> void:
     add_theme_constant_override("separation", SEPARATION)
 
 
-func add_player(title: String, content: Node) -> void:
+func add_player(title: String, content: Node, base_size: Vector2 = Vector2.ZERO) -> void:
     var screen: PlayerScreen = PlayerScreen.new()
     add_child(screen)
-    screen.setup(title, content)
+    screen.setup(title, content, base_size)

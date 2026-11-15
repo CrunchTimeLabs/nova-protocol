@@ -1,5 +1,5 @@
 extends Control
-## Menú inicial: Start, Labs (una lista de features) y Exit.
+## Menú inicial: Start, Levels (una lista de niveles), Labs (una lista de features) y Exit.
 
 
 const BACKGROUND := Color(0.02, 0.03, 0.07)
@@ -7,6 +7,10 @@ const MENU_WIDTH := 360.0
 const SEPARATION := 12
 const LAB_COLUMNS := 3
 const BACK_MARGIN := Vector2(16, 16)
+## Niveles jugables: [título, ruta de la escena].
+const LEVELS: Array = [
+	["Meteoritos", SceneRoutes.METEOR_MISSION],
+]
 ## Labs de las features: [título, ruta de la escena].
 const LABS: Array = [
 	["Movement", SceneRoutes.MOVEMENT_LAB],
@@ -72,9 +76,16 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show_main() -> void:
 	_show_menu("NOVA PROTOCOL", 1)
 	_add_button("Start", _on_start)
+	_add_button("Levels", _show_levels)
 	_add_button("Labs", _show_labs)
 	if not OS.has_feature("web"):          # en navegador no hay a dónde "salir"
 		_add_button("Exit", _on_exit)
+
+
+func _show_levels() -> void:
+	_show_menu("LEVELS", 1)
+	for entry: Array in LEVELS:
+		_add_button(str(entry[0]), SceneRoutes.go_to.bind(get_tree(), str(entry[1])))
 
 
 func _show_labs() -> void:

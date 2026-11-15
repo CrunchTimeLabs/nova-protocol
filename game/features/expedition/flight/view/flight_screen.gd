@@ -18,6 +18,8 @@ const SIDE_NAMES: Dictionary = {
     FlightHazards.Side.RIGHT: "LA DERECHA",
 }
 
+## Dirección de la nave (-1..1 por eje). Si no se da, se leen WASD y flechas; quien monta la pantalla puede inyectar otra fuente.
+var move_source: Callable = Callable()
 var flight: Flight
 var _status: Flight.Status = Flight.Status.RUNNING
 var _end_timer: float = 0.0
@@ -70,7 +72,8 @@ func _physics_process(delta: float) -> void:
         return
     var hull_before: float = expedition.hull.current
     var wants_phase: bool = Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_SHIFT)
-    _status = flight.step(delta, move_input(), wants_phase)
+    var move: Vector2 = move_input() if move_source.is_null() else move_source.call() as Vector2
+    _status = flight.step(delta, move, wants_phase)
     if expedition.hull.current < hull_before - 0.001:
         _hurt_flash = minf(1.0, _hurt_flash + 0.25)
     for event: Flight.Event in flight.events:

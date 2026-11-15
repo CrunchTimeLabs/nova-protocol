@@ -55,6 +55,8 @@ var is_practice: bool
 var duration: float
 var density: float
 var radiation: float
+## Solo meteoritos: sin orbes, cañones, ondas ni radiación. Las rocas siguen haciendo daño.
+var rocks_only: bool = false
 
 ## Posición de la nave: la lleva un `MovementBody` del toolkit, confinado al área de juego.
 var ship: Vector2:
@@ -97,6 +99,16 @@ func _init(expedition: Expedition, p_planet: PlanetSpec, p_leg: int, p_is_practi
     _next_laser = duration * 0.22
     _next_wave = duration * 0.33
     _next_front = duration * 0.16
+
+
+## Tramo de solo meteoritos con la frecuencia (`p_density`) y la duración que se pidan, sobre un planeta de fondo.
+static func meteor_field(expedition: Expedition, p_planet: PlanetSpec, p_density: float, seconds: float) -> Flight:
+    var flight: Flight = Flight.new(expedition, p_planet, 1, false)
+    flight.rocks_only = true
+    flight.density = p_density
+    flight.radiation = 0.0
+    flight.duration = seconds
+    return flight
 
 
 func progress() -> float:
@@ -152,7 +164,7 @@ func _spawn(t: float, p: float) -> void:
         var count: int = 2 if p > 0.55 and _rng.chance(0.4) else 1
         for i: int in count:
             _spawn_rock(p)
-    if is_practice:
+    if is_practice or rocks_only:
         return
     if t >= _next_orb and t < duration - ORB_CUTOFF:
         _next_orb = t + _rng.range_float(1.5, 2.8)

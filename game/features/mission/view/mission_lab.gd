@@ -64,6 +64,11 @@ func _title_for(_role: int) -> String:
     return ""
 
 
+## Las subclases cuya vista está maquetada para un tamaño fijo lo devuelven para que se escale al recuadro; cero: tamaño real.
+func _base_size_for(_role: int) -> Vector2:
+    return Vector2.ZERO
+
+
 func _mode_text() -> String:
     if options.mode == SessionOptions.Mode.SPLIT_SCREEN:
         return "Pantalla dividida · Esc: menú"
@@ -75,4 +80,4 @@ func _mode_text() -> String:
 func _on_joined(_slot: int, role: int, client: MatchClient) -> void:
     var panel: Node = _panel_for(client)
     if panel != null:
-        _screen.add_player(_title_for(role), panel)
+        _screen.add_player(_title_for(role), panel, _base_size_for(role))
