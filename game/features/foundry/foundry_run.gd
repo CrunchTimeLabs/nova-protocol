@@ -31,6 +31,8 @@ const LIFETIMES: Dictionary = {
 }
 ## Recursos que cuesta generar cada mineral (no se devuelven si se pierde).
 const COSTS: Dictionary = {Mineral.IRON: 2, Mineral.COPPER: 1, Mineral.GOLD: 4}
+## Recursos totales del nivel: cada mineral nuevo gasta uno.
+const RESOURCE_TOTAL := 100
 const MIN_GROUP := 3
 const MAX_GROUP := 4
 const MIN_PICK := 1
@@ -77,6 +79,8 @@ var waiting: Array[Spawn] = []
 ## Objetivos en el centro, cada uno con su reloj.
 var active: Array[Spawn] = []
 var lost: int = 0
+## Recursos que quedan del total del nivel; baja de uno en uno con cada mineral nuevo.
+var resources: int = RESOURCE_TOTAL
 var resources_used: int = 0
 var resources_lost: int = 0
 var value: int = 0
@@ -161,6 +165,7 @@ func _next_round() -> void:
     var added: Array[Spawn] = []
     while waiting.size() < size:
         var spawn: Spawn = Spawn.new(_random_mineral())
+        resources = maxi(resources - 1, 0)
         resources_used += int(COSTS[spawn.mineral])
         waiting.append(spawn)
         added.append(spawn)

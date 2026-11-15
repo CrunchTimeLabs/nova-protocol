@@ -72,6 +72,7 @@ func test_waiting_minerals_stay_for_the_next_group_without_new_cost() -> void:
     _first_target()
     var left: Array[FoundryRun.Spawn] = _run.waiting.duplicate()
     var used: int = _run.resources_used
+    var resources_before: int = _run.resources
     _clear_center()
     for i: int in 40:
         _run.tick(0.05)
@@ -80,12 +81,15 @@ func test_waiting_minerals_stay_for_the_next_group_without_new_cost() -> void:
     check_equal(_run.rounds, 2, "con el centro vacío llega la ronda siguiente")
     var group: Array[FoundryRun.Spawn] = _run.waiting + _run.active
     var new_cost: int = 0
+    var new_minerals: int = 0
     for spawn: FoundryRun.Spawn in group:
         if not left.has(spawn):
             new_cost += int(FoundryRun.COSTS[spawn.mineral])
+            new_minerals += 1
     for spawn: FoundryRun.Spawn in left:
         check(group.has(spawn), "el que esperaba sigue en el grupo nuevo")
     check_equal(_run.resources_used, used + new_cost, "solo los minerales nuevos gastan recursos")
+    check_equal(_run.resources, resources_before - new_minerals, "el total baja de uno en uno con cada mineral nuevo")
 
 
 func test_same_seed_repeats_rounds() -> void:
