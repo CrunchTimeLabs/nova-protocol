@@ -1,3 +1,7 @@
+
+
+https://github.com/user-attachments/assets/4f9af519-fd9f-423e-b54e-fd9ff0218463
+
 # Nova Protocol
 
 Build a space mission from scratch, play every step of it, and discover what it takes to reach another world.
