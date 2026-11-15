@@ -6,6 +6,13 @@ const BACKGROUND := Color(0.02, 0.03, 0.07)
 const MENU_WIDTH := 360.0
 const SEPARATION := 12
 const LAB_COLUMNS := 3
+## Cuánto sube el menú respecto al centro de la pantalla.
+const MENU_RISE := 0.0
+## Espacio extra entre el logo y los botones del menú principal.
+const BUTTONS_DROP := 60.0
+const LOGO := preload("res://assets/NOVA_PROTOCOL.svg")
+## Zona del logo dentro del SVG (1920x1080, con margen transparente alrededor).
+const LOGO_REGION := Rect2(420, 325, 1080, 425)
 const BACK_MARGIN := Vector2(16, 16)
 ## Niveles jugables: [título, ruta de la escena].
 const LEVELS: Array = [
@@ -36,6 +43,8 @@ const LABS: Array = [
 ]
 
 var _title: Label
+var _logo: TextureRect
+var _gap: Control
 var _column: VBoxContainer
 var _buttons: GridContainer
 var _back: Button
@@ -50,6 +59,7 @@ func _ready() -> void:
 
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_bottom = -2.0 * MENU_RISE
 	add_child(center)
 
 	_column = VBoxContainer.new()
@@ -61,6 +71,21 @@ func _ready() -> void:
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.add_theme_font_size_override("font_size", 32)
 	_column.add_child(_title)
+
+	var logo_texture: AtlasTexture = AtlasTexture.new()
+	logo_texture.atlas = LOGO
+	logo_texture.region = LOGO_REGION
+	_logo = TextureRect.new()
+	_logo.texture = logo_texture
+	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_logo.custom_minimum_size = Vector2(MENU_WIDTH, MENU_WIDTH * LOGO_REGION.size.y / LOGO_REGION.size.x)
+	_column.add_child(_logo)
+	_column.move_child(_logo, 0)
+
+	_gap = Control.new()
+	_gap.custom_minimum_size = Vector2(0, BUTTONS_DROP)
+	_column.add_child(_gap)
 
 	_buttons = GridContainer.new()
 	_buttons.add_theme_constant_override("h_separation", SEPARATION)
@@ -107,6 +132,9 @@ func _show_menu(title_text: String, columns: int) -> void:
 	_title.text = title_text
 	_buttons.columns = columns
 	_back.visible = title_text != "NOVA PROTOCOL"
+	_title.visible = _back.visible
+	_logo.visible = not _back.visible
+	_gap.visible = _logo.visible
 	for child: Node in _buttons.get_children():
 		_buttons.remove_child(child)
 		child.queue_free()
