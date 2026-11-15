@@ -174,6 +174,13 @@ func _draw_exit_hint() -> void:
     var rect: Rect2 = _run.exit_rect
     var left: int = _run.level.minimum - _run.total()
     var text: String = "Faltan %d" % left if left > 0 else "¡Los dos a la rampa!"
+    if left <= 0:
+        var on_ramp: Array[int] = []
+        for car: MazeCar in _run.cars:
+            if car.is_on_exit:
+                on_ramp.append(car.player)
+        if on_ramp.size() == 1:
+            text = "J%d listo · falta J%d" % [on_ramp[0], 3 - on_ramp[0]]
     var color: Color = DuoDraw.LOCKED if left > 0 else DuoDraw.OPEN
     UiDraw.text(self, Vector2(rect.end.x + 10, rect.position.y + 12), text, 14, color, true)
 

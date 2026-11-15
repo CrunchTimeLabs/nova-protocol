@@ -299,7 +299,8 @@ func _collides(center: Vector2) -> bool:
     # La rampa tiene paredes a los lados: solo se baja por la celda de salida.
     var below: float = origin.y + float(maze.rows) * cell_size
     if box.end.y > below + WALL_THICKNESS:
-        var lane: Rect2 = Rect2(exit_rect.position.x, below, exit_rect.size.x, EXIT_DEPTH + WALL_THICKNESS + 4.0)
+        # El carril empieza una celda dentro del laberinto: el coche cruza el borde con parte del cuerpo aún dentro.
+        var lane: Rect2 = Rect2(exit_rect.position.x, below - cell_size, exit_rect.size.x, cell_size + EXIT_DEPTH + WALL_THICKNESS + 4.0)
         if not lane.encloses(box) and _inside_horizontal_board(box):
             return true
     return false
