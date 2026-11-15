@@ -2,34 +2,63 @@
 
 ## Propósito
 
-Minijuego de fundición: los minerales aparecen cada 1,6–3,2 s, con un máximo de 3 activos, y cada uno vive un tiempo aleatorio entre 4 y 7 s. El jugador teclea su nombre para recogerlos antes de que se enfríen. La sesión dura 20 segundos y termina cuando el temporizador llega a cero.
+Minijuego de fundición según el guion de `MAYBER/message.txt`. Tiene dos relojes independientes:
+
+- **Nivel (20 s):** el reloj de arena. Al agotarse se detienen las apariciones y todos los temporizadores.
+- **Mineral (4–7 s):** cada objetivo tiene el suyo, sorteado según su tipo. Arranca solo cuando el mineral es elegido y pasa al centro.
+
+Funcionamiento de cada ronda:
+
+- Al empezar la ronda, la tolva se completa hasta un grupo de 3 o 4 minerales. Cada mineral nuevo gasta recursos.
+- Del grupo se eligen al azar 1 o 2, que pasan al centro. Los que no se eligen esperan en la tolva y entran en el grupo siguiente.
+- Para recoger un objetivo se teclea su nombre.
+- Si su tiempo se agota, el mineral desaparece y los recursos gastados en él se pierden. Los recursos son solo un contador visual.
+- La ronda siguiente empieza cuando el centro queda vacío.
+
+| Mineral | Frecuencia | Valor | Vida | Coste |
+|---------|-----------|-------|------|-------|
+| Oro     | rara (17) | 50    | 4–5 s | 4 |
+| Hierro  | media (33)| 20    | 5–6 s | 2 |
+| Cobre   | común (50)| 10    | 6–7 s | 1 |
 
 ## Escenarios
 
-- DADO una sesión nueva CUANDO se crea ENTONCES el temporizador vale 20 s y los tres contadores valen cero.
-- DADO que avanza el tiempo CUANDO se cumple el intervalo sorteado ENTONCES aparece un mineral aleatorio sin descontar tiempo extra.
-- DADO un mineral activo CUANDO el jugador envía su nombre exacto ENTONCES su contador sube una unidad y el mineral desaparece.
-- DADO un mineral activo CUANDO se agota su vida sorteada (entre 4 y 7 s) ENTONCES se descarta, cuenta como perdido y no suma al contador.
-- DADO dos minerales del mismo tipo CUANDO se envía ese nombre ENTONCES se recoge solo el que tiene menos vida.
-- DADO que el temporizador llega a cero CUANDO se hace el siguiente tick ENTONCES la sesión termina una sola vez y no procesa más.
+- DADO una sesión nueva CUANDO se crea ENTONCES el reloj vale 20 s y los tres contadores valen cero.
+- DADO el centro vacío CUANDO pasa la pausa ENTONCES la tolva se completa a 3 o 4 y van 1 o 2 al centro.
+- DADO minerales que esperan CUANDO llega el grupo siguiente ENTONCES siguen en él sin volver a gastar recursos.
+- DADO un objetivo CUANDO se teclea su nombre exacto ENTONCES sube su contador y su valor, queda RECOLECTADO y no se puede recoger otra vez.
+- DADO dos objetivos CUANDO se recoge uno ENTONCES el reloj del otro no cambia.
+- DADO un objetivo CUANDO se agota su reloj ENTONCES queda PERDIDO, desaparece y sus recursos no se devuelven.
+- DADO un mineral en la tolva CUANDO se teclea su nombre ENTONCES no se recoge (solo los del centro).
+- DADO que la arena se agota CUANDO se hace el siguiente tick ENTONCES la sesión termina una sola vez y todo queda congelado.
 
 ## Qué reutilizar
 
-- `FoundryRun.new(random)`: crea la sesión con un `GameRandom` inyectado; su estado público es `remaining`, `counts`, `active`, `lost` y `ended`.
-- `FoundryRun.tick(delta)`: avanza el temporizador, las vidas y las apariciones; el dueño lo llama desde su bucle.
-- `FoundryRun.collect(word)`: intenta recoger un mineral por nombre, sin distinguir mayúsculas; devuelve si recogió.
-- `FoundryRun.count(mineral)`: consulta el contador de un mineral.
-- Señales `spawned`, `collected`, `expired` y `run_ended`: para que una vista reaccione sin leer el estado cada fotograma.
+- `FoundryRun.new(random)` crea la sesión con un `GameRandom` inyectado. Su estado público:
+  - `remaining`, `counts`, `waiting`, `active`;
+  - `lost`, `resources_used`, `resources_lost`;
+  - `value`, `rounds`, `ended`.
+- `tick(delta)` avanza la sesión, `collect(word)` intenta recoger un mineral y `count(mineral)` consulta un contador.
+- Señales para la vista: `group_spawned`, `selected`, `collected`, `expired` y `run_ended`.
 
-`FoundryRun` es una clase nueva porque `Countdown` mide pasos fijos y `ResourceMeter` un valor acotado, pero ninguno modela apariciones con vida ni recogida por texto.
+## Vista (`view/`)
+
+- `FoundryScreen`: la pantalla completa. Tiene:
+  - el fondo del horno, el reloj de arena, la tolva sobre la cinta y las tarjetas del centro (imagen, nombre, barra verde→amarilla→roja y estado);
+  - el almacén con los contadores, los recursos y el resumen final;
+  - animaciones de caída, vuelo al centro, vuelo al almacén, brasas y el temblor del texto si una letra es incorrecta.
+- `HourglassDraw`: dibuja la arena con la misma forma del vidrio que el marco pixel art.
+- `FoundryArt`: la paleta, las imágenes y el color de la barra.
+- `FoundrySfx`: los sonidos, sintetizados con `Synth`.
+- Los assets están en `assets/foundry/`. Sus generadores están en `assets/foundry/source/`: el fondo con Blender (`foundry_hall.py`) y los minerales y el reloj con PIL (`pixel_art.py`).
 
 ## Depende de
 
-- `toolkit/core`: `GameRandom` para las apariciones y vidas reproducibles.
-- `toolkit/ui/view`: `UiDraw` para el dibujo del laboratorio (solo la vista).
+- `toolkit/core`: `GameRandom`.
+- `toolkit/ui/view`: `UiDraw`.
+- `toolkit/audio/view`: `Synth`.
 
 ## Cubierto por
 
 - Laboratorio: `app/labs/foundry.gd` y `scenes/foundry_lab.tscn`.
-- Pruebas: `tests/features/foundry/test_foundry_run.gd` (10 pruebas).
-- Nivel: no hay; el laboratorio compone la mecánica aislada.
+- Pruebas: `tests/features/foundry/test_foundry_run.gd` (14 pruebas).
