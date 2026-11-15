@@ -120,3 +120,19 @@ func test_ores_spawn_after_warm_up_with_fair_lifetime() -> void:
     check(not _run.spawns.items.is_empty(), "aparecen menas")
     for spawn: TimedSpawns.Spawn in _run.spawns.items:
         check(spawn.lifetime > DuoRun.REACTION_TIME, "cada mena da tiempo de reaccionar")
+
+
+## Regresión: los coches se quedaban parados justo encima de la rampa (el carril no los dejaba cruzar el borde).
+func test_cars_can_drive_down_into_the_ramp_in_every_level() -> void:
+    for level: CollectionLevel.Level in [CollectionLevel.Level.EASY, CollectionLevel.Level.MEDIUM, CollectionLevel.Level.HARD]:
+        var run: DuoRun = DuoRun.new(DuoLevel.new(level), SEED)
+        run.is_warming_up = false
+        for i: int in run.level.minimum:
+            run.cars[0].tally.add(Ores.Ore.HEMATITE, 1)
+        run.cars[0].position = run.center_of(run.exit_cell) + Vector2(-3.0, 0.0)
+        run.cars[1].position = run.center_of(run.exit_cell) + Vector2(3.0, 0.0)
+        var down: Array[Vector2] = [Vector2.DOWN, Vector2.DOWN]
+        for f: int in 120:
+            run.step(1.0 / 60.0, down)
+        check(run.cars[0].is_on_exit and run.cars[1].is_on_exit, "%s: los dos bajan a la rampa" % run.level.title())
+        check(run.is_finished, "%s: y termina" % run.level.title())
