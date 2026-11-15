@@ -7,7 +7,6 @@ extends Control
 
 
 const DIAL_MIN: float = 0.0
-const DIAL_MAX: float = 600.0
 const DIAL_MARK_STEP: float = 100.0
 const MARGIN: int = 16
 const SEPARATION: int = 10
@@ -30,6 +29,13 @@ var title_text: String = "Fundición — temperatura"
 var hint_text: String = "Flecha arriba: subir · Flecha abajo: bajar · R: reiniciar · Esc: menú"
 ## Aviso junto al foco cuando la aguja está fuera de rango (por ejemplo, qué se bloquea por ello).
 var out_of_range_text: String = ""
+## Escala por tramos y marcas del reloj (solo presentación). Sin ellas, el reloj es lineal.
+var dial_map: ScaleMap = null
+var dial_marks: Array[float] = []
+## false: sin barra de progreso ni aciertos (el objetivo lo fija otro y aquí no se puntúa).
+var shows_progress: bool = true
+## Texto mientras no haya un objetivo.
+var waiting_text: String = "Esperando objetivo…"
 
 var _state: TemperatureState
 var _dial: DialView = DialView.new()
@@ -50,12 +56,15 @@ func _init() -> void:
 
 func setup(state: TemperatureState) -> void:
     _state = state
-    _dial.set_range(DIAL_MIN, DIAL_MAX, DIAL_MARK_STEP)
+    _dial.set_range(DIAL_MIN, state.scale_max, DIAL_MARK_STEP)
+    _dial.set_map(dial_map)
+    _dial.set_marks(dial_marks)
     _dial.set_colors(dial_arc_color, dial_target_color, dial_needle_color, muted_color)
-    _dial.set_target(state.target_low, state.target_high)
+    if state.has_target:
+        _dial.set_target(state.target_low, state.target_high)
     _progress.setup(state.progress)
     _build()
-    state.targets.target_announced.connect(_on_target_announced)
+    state.target_changed.connect(_on_target_changed)
 
 
 func _draw() -> void:
@@ -71,12 +80,13 @@ func _process(_delta: float) -> void:
     var is_in_range: bool = _state.is_in_range()
     _lamp.set_ok(is_in_range)
     _alert.text = "" if is_in_range or _state.is_over() else out_of_range_text
-    _message.text = _state.message
+    _message.text = _state.message if _state.has_target else waiting_text
     _log.text = "\n".join(_state.log.lines())
+    var score: String = " — Aciertos: %d" % _state.hits if shows_progress else ""
     if _state.is_over():
-        _status.text = "Tiempo agotado — Aciertos: %d" % _state.hits
+        _status.text = "Tiempo agotado" + score
     else:
-        _status.text = "Tiempo: %d s — Aciertos: %d" % [_state.time_left(), _state.hits]
+        _status.text = "Tiempo: %d s" % _state.time_left() + score
 
 
 func _build() -> void:
@@ -112,7 +122,8 @@ func _build() -> void:
 
     _progress.custom_minimum_size = Vector2(PROGRESS_WIDTH, 0)
     _progress.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-    column.add_child(_progress)
+    if shows_progress:
+        column.add_child(_progress)
 
     _status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _tint(_status, text_color)
@@ -131,5 +142,5 @@ func _tint(label: Label, color: Color) -> void:
     label.add_theme_font_override("font", UiDraw.font(true))
 
 
-func _on_target_announced(low: float, high: float, _text: String) -> void:
+func _on_target_changed(low: float, high: float, _text: String) -> void:
     _dial.set_target(low, high)

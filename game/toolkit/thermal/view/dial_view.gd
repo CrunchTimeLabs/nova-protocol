@@ -29,12 +29,26 @@ var _low: float = 0.0
 var _high: float = 0.0
 var _has_target: bool = false
 var _reading: float = 0.0
+var _map: ScaleMap = null
+var _marks: Array[float] = []
 
 
 func set_range(minimum: float, maximum: float, mark_step: float) -> void:
     _min = minimum
     _max = maximum
     _step = maxf(mark_step, 0.001)
+    queue_redraw()
+
+
+## Escala por tramos para colocar los valores en el arco (solo presentación). Sin mapa, la escala es lineal.
+func set_map(map: ScaleMap) -> void:
+    _map = map
+    queue_redraw()
+
+
+## Valores con marca y número; sin lista, hay una marca cada `mark_step` de set_range.
+func set_marks(values: Array[float]) -> void:
+    _marks = values
     queue_redraw()
 
 
@@ -65,10 +79,14 @@ func _draw() -> void:
     draw_arc(center, radius, _angle(_min), _angle(_max), ARC_POINTS, _arc_color, ARC_WIDTH)
     if _has_target:
         draw_arc(center, radius, _angle(_low), _angle(_high), ARC_POINTS, _target_color, TARGET_WIDTH)
-    var mark: float = _min
-    while mark <= _max + 0.0001:
-        _draw_mark(center, radius, mark)
-        mark += _step
+    if _marks.is_empty():
+        var mark: float = _min
+        while mark <= _max + 0.0001:
+            _draw_mark(center, radius, mark)
+            mark += _step
+    else:
+        for value: float in _marks:
+            _draw_mark(center, radius, value)
     var tip: Vector2 = center + Vector2.from_angle(_angle(_reading)) * radius * 0.9
     draw_line(center, tip, _needle_color, NEEDLE_WIDTH)
     draw_circle(center, NEEDLE_WIDTH * 2.0, _needle_color)
@@ -83,5 +101,5 @@ func _draw_mark(center: Vector2, radius: float, value: float) -> void:
 
 ## Ángulo (radianes, sentido horario en pantalla) de un valor sobre el arco.
 func _angle(value: float) -> float:
-    var fraction: float = clampf((value - _min) / maxf(_max - _min, 0.001), 0.0, 1.0)
+    var fraction: float = _map.fraction(value) if _map != null else clampf((value - _min) / maxf(_max - _min, 0.001), 0.0, 1.0)
     return deg_to_rad(START_DEGREES + fraction * SWEEP_DEGREES)

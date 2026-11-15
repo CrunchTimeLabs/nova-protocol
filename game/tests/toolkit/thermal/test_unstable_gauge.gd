@@ -38,3 +38,46 @@ func test_never_leaves_the_scale_and_push_moves_it() -> void:
     var calm: UnstableGauge = UnstableGauge.new(2, 300.0)
     calm.push(25.0)
     check_equal(calm.value, 325.0, "push suma")
+
+
+func test_scale_maximum_is_configurable() -> void:
+    var wide: UnstableGauge = UnstableGauge.new(2, 900.0, 1800.0)
+    wide.push(1.0e6)
+    check_equal(wide.value, 1800.0, "el máximo configurado acota el impulso")
+    for _i: int in range(100):
+        wide.step(0.1)
+        check(wide.value <= 1800.0 and wide.value >= UnstableGauge.SCALE_MIN, "la deriva respeta la escala configurada")
+
+
+func test_pushing_dampens_the_drift_so_the_player_is_not_held_back() -> void:
+    var free: UnstableGauge = UnstableGauge.new(3, 900.0, 1800.0)
+    var damped: UnstableGauge = UnstableGauge.new(3, 900.0, 1800.0)
+    damped.push_damping = 0.25
+    free.step(0.1, true)
+    damped.step(0.1, true)
+    var free_move: float = absf(free.value - 900.0)
+    var damped_move: float = absf(damped.value - 900.0)
+    check_approx(damped_move, free_move * 0.25, "empujando, la deriva queda en la fracción pedida")
+    var idle_free: UnstableGauge = UnstableGauge.new(3, 900.0, 1800.0)
+    var idle_damped: UnstableGauge = UnstableGauge.new(3, 900.0, 1800.0)
+    idle_damped.push_damping = 0.25
+    idle_free.step(0.1)
+    idle_damped.step(0.1)
+    check_equal(idle_damped.value, idle_free.value, "sin empujar no cambia nada")
+
+
+func test_smooth_wander_changes_speed_gradually() -> void:
+    var gauge: UnstableGauge = UnstableGauge.new(5, 900.0, 1800.0)
+    gauge.wander_response = 2.0
+    gauge.drift_speed = 100.0
+    var delta: float = 0.05
+    var previous_value: float = gauge.value
+    var previous_step: float = 0.0
+    var largest_jump: float = 0.0
+    for _i: int in range(400):
+        gauge.step(delta)
+        var current_step: float = gauge.value - previous_value
+        largest_jump = maxf(largest_jump, absf(current_step - previous_step))
+        previous_value = gauge.value
+        previous_step = current_step
+    check(largest_jump < 0.5 * gauge.drift_speed * delta, "la velocidad de la deriva no salta de golpe")

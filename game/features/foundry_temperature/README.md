@@ -11,6 +11,8 @@
 
 - DADO un reloj compartido (`own_clock` en false) CUANDO lo lleva otro ENTONCES la partida solo termina con `finish()` y muestra el tiempo de `sync_time()` (nivel «Fundición dúo»).
 
+- DADO el modo no independiente (`is_standalone` en false) CUANDO quien compone fija un objetivo con `set_target` ENTONCES se avisa (`target_changed`), no hay generador, progreso ni aciertos, y sin objetivo todo valor cuenta como dentro del rango (nivel «Fundición dúo»).
+
 ## Qué reutilizar
 - `TemperatureState` (orquestador), `TemperatureTargets` (objetivos con semilla) y la vista `TemperaturePanel`.
 - Constantes ajustables: `PLAYER_RATE`, `HOLD_SECONDS`, `ALERT_INTERVAL`, `MATCH_SECONDS`, `TARGET_INTERVAL`, `TARGET_RANGES`.

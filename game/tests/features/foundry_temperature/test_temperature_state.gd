@@ -73,3 +73,34 @@ func test_shared_clock_does_not_end_by_itself_and_finish_ends_it() -> void:
     var value_then: float = shared.gauge.value
     shared.step(1.0, 1.0)
     check(shared.is_over() and shared.gauge.value == value_then, "finish() lo termina y ya nada cambia")
+
+
+func test_boost_moves_the_needle_faster() -> void:
+    var normal: TemperatureState = TemperatureState.new(1)
+    var boosted: TemperatureState = TemperatureState.new(1)
+    for state: TemperatureState in [normal, boosted]:
+        state.gauge.drift_speed = 0.0
+    var start: float = normal.gauge.value
+    normal.step(0.1, 1.0)
+    boosted.step(0.1, 1.0, true)
+    check_approx(normal.gauge.value - start, TemperatureState.PLAYER_RATE * 0.1, "sin ayuda sube PLAYER_RATE")
+    check_approx(boosted.gauge.value - start, TemperatureState.PLAYER_RATE * 0.1 * TemperatureState.BOOST_FACTOR, "con ayuda sube BOOST_FACTOR veces más")
+
+
+func test_non_standalone_mode_takes_targets_from_outside_and_does_not_score() -> void:
+    var driven: TemperatureState = TemperatureState.new(1, false, false, 1800.0)
+    driven.gauge.drift_speed = 0.0
+    check(not driven.has_target and driven.is_in_range(), "sin objetivo no hay nada que corregir")
+    check_equal(driven.scale_max, 1800.0, "la escala es la pedida")
+    var changes: Array[Vector2] = []
+    driven.target_changed.connect(func(low: float, high: float, _text: String) -> void: changes.append(Vector2(low, high)))
+    driven.set_target(1000.0, 1050.0, "Oro")
+    check_equal(changes, [Vector2(1000.0, 1050.0)] as Array[Vector2], "set_target avisa del objetivo nuevo")
+    driven.gauge.push(1025.0 - driven.gauge.value)
+    for _i: int in range(int(TemperatureState.HOLD_SECONDS) + 2):
+        driven.step(1.0, 0.0)
+    check_equal(driven.hits, 0, "dentro del rango no se puntúa")
+    check_equal(driven.progress.current, 0.0, "ni hay progreso")
+    driven.gauge.push(1.0e6)
+    driven.step(1.0, 0.0)
+    check(not driven.is_in_range(), "fuera del rango sigue avisando")
