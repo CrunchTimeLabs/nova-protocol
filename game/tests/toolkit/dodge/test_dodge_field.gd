@@ -152,3 +152,44 @@ func test_rocks_get_harder_as_the_run_advances() -> void:
     early.step(1.5, Vector2.ZERO)
     late.step(95.0, Vector2.ZERO)
     check(late.rocks.is_empty() or early.rocks.is_empty() or late.rocks[0].speed > early.rocks[0].speed, "más tarde las rocas son más rápidas")
+
+
+func test_phase_protects_drains_recharges_and_speeds_up() -> void:
+    var field: DodgeField = DodgeField.new(SIZE, 0.01, 60.0, 1)
+    _rock_on_ship(field)
+    var wave: DodgeWave = _wave_on_ship(field)
+    field.step(FRAME, Vector2.ZERO, true)
+    check(field.in_phase and field.is_protected(), "en fase está protegida")
+    check_approx(field.hull.current, DodgeField.HULL_MAX, "en fase no la dañan ni rocas ni ondas")
+    check(not wave.has_hit, "la onda no se marca como golpeada: sigue su camino")
+    check(field.phase.current < DodgeField.PHASE_MAX, "la fase consume carga")
+    var drained: float = field.phase.current
+    field.step(1.0, Vector2.ZERO, false)
+    check(not field.in_phase, "sin mantener, no hay fase")
+    check(field.phase.current > drained, "sin fase la carga se recarga despacio")
+    var held: DodgeField = DodgeField.new(SIZE, 0.01, 60.0, 1)
+    var normal: DodgeField = DodgeField.new(SIZE, 0.01, 60.0, 1)
+    held.step(0.5, Vector2.RIGHT, true)
+    normal.step(0.5, Vector2.RIGHT, false)
+    check(held.ship.x > normal.ship.x, "en fase la nave va más rápida")
+
+
+func test_phase_ends_when_the_charge_runs_out() -> void:
+    var field: DodgeField = DodgeField.new(SIZE, 0.01, 60.0, 1)
+    field.phase.set_value(0.0)
+    field.step(FRAME, Vector2.ZERO, true)
+    check(not field.in_phase, "sin carga no hay fase aunque se mantenga")
+    field.phase.set_value(DodgeField.PHASE_DRAIN * FRAME * 0.5)
+    field.step(FRAME, Vector2.ZERO, true)
+    field.step(FRAME, Vector2.ZERO, true)
+    check_approx(field.phase.current, DodgeField.PHASE_RECHARGE * FRAME, "al vaciarse deja de proteger y recarga")
+    check(not field.in_phase, "tras vaciarse ya no está en fase")
+
+
+func test_a_wave_band_has_thickness() -> void:
+    var wave: DodgeWave = DodgeWave.new(Vector2.ZERO, 0.0, 1000.0)
+    wave.radius = 100.0
+    var inside: Vector2 = Vector2(100.0 + DodgeWave.THICKNESS * 0.4, 0.0)
+    var outside: Vector2 = Vector2(100.0 + DodgeWave.THICKNESS * 0.5 + 1.0, 0.0)
+    check(wave.reaches(inside, 0.0), "dentro de la banda la alcanza")
+    check(not wave.reaches(outside, 0.0), "fuera de la banda no")

@@ -3,6 +3,7 @@ extends RefCounted
 ## Campo de esquivar: una nave se mueve dentro de un recuadro de tamaño dado y cruzan rocas de derecha a izquierda.
 ## Cada golpe resta casco y da unos segundos de invulnerabilidad. Termina al llegar a `duration` o al quedarse sin casco.
 ## Todo el azar usa la semilla; el tamaño del campo es un parámetro (rocas, velocidades y nave se escalan con él).
+## Con `wants_phase` la nave hace un salto de fase: intangible y más rápida mientras dura su carga, que se recarga despacio.
 ## Con `wind` > 0 también nacen ondas expansivas (viento solar) que golpean una vez al alcanzar la nave.
 ## Sin nodos: la vista lee `ship`, `rocks`, `waves`, `wave_warning`, `hull`, `elapsed` y `is_protected()`.
 
@@ -41,6 +42,11 @@ const SPEED_DENSITY_GAIN: float = 0.3
 const ROCK_DRIFT_HEIGHTS: float = 0.079
 const ROCK_MARGIN_HEIGHTS: float = 0.05
 
+## Fase (del original: carga 120, consumo 34/s, velocidad x1.8) con recarga lenta cuando no se usa.
+const PHASE_MAX: float = 120.0
+const PHASE_DRAIN: float = 34.0
+const PHASE_RECHARGE: float = 6.0
+const PHASE_SPEED_BOOST: float = 1.8
 ## Ondas (viento solar): daño, invulnerabilidad, intervalo (a mayor `wind`, más seguido) y velocidad en anchos por segundo.
 const WAVE_DAMAGE: float = 15.0
 const WAVE_INVULNERABILITY_SECONDS: float = 1.0
@@ -62,6 +68,8 @@ var duration: float
 var hull: ResourceMeter = ResourceMeter.new(HULL_MAX, HULL_MAX)
 var elapsed: float = 0.0
 var status: Status = Status.RUNNING
+var phase: ResourceMeter = ResourceMeter.new(PHASE_MAX, PHASE_MAX)
+var in_phase: bool = false
 var rocks: Array[DodgeRock] = []
 var waves: Array[DodgeWave] = []
 ## Cuántas ondas han nacido.
@@ -82,6 +90,7 @@ var ship: Vector2:
 var _random: GameRandom
 var _controller: ManualController = ManualController.new()
 var _body: MovementBody
+var _ship_speed: float
 var _ship_area: Rect2
 var _invulnerable: float = 0.0
 var _next_rock: float = FIRST_ROCK_SECONDS
@@ -104,17 +113,20 @@ func _init(
             Vector2(SHIP_RADIUS, SHIP_RADIUS),
             p_size - Vector2(SHIP_RADIUS, SHIP_RADIUS) * 2.0,
             )
-    _body = MovementBody.new(_controller, MovementProfile.new(p_size.x * SHIP_SPEED_WIDTHS, 0.0, 0.0), p_size * SHIP_START)
+    _ship_speed = p_size.x * SHIP_SPEED_WIDTHS
+    _body = MovementBody.new(_controller, MovementProfile.new(_ship_speed, 0.0, 0.0), p_size * SHIP_START)
 
 
 func is_protected() -> bool:
-    return _invulnerable > 0.0
+    return in_phase or _invulnerable > 0.0
 
 
-## Un paso. `move` en -1..1 por eje. Terminada la partida ya no cambia nada.
-func step(delta: float, move: Vector2) -> Status:
+## Un paso. `move` en -1..1 por eje; `wants_phase` mientras se mantiene el salto de fase. Terminada la partida ya no cambia nada.
+func step(delta: float, move: Vector2, wants_phase: bool = false) -> Status:
     if status != Status.RUNNING or delta <= 0.0:
         return status
+    _update_phase(delta, wants_phase)
+    _body.profile.max_speed = maxf(_ship_speed * (PHASE_SPEED_BOOST if in_phase else 1.0), MovementProfile.MIN_SPEED)
     _controller.set_direction(move)
     _body.step(delta)
     _body.confine(_ship_area)
@@ -129,6 +141,11 @@ func step(delta: float, move: Vector2) -> Status:
     elif elapsed >= duration:
         status = Status.ARRIVED
     return status
+
+
+func _update_phase(delta: float, wants_phase: bool) -> void:
+    in_phase = wants_phase and phase.current > 0.0
+    phase.add(-PHASE_DRAIN * delta if in_phase else PHASE_RECHARGE * delta)
 
 
 func progress() -> float:

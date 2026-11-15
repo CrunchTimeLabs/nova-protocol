@@ -75,3 +75,19 @@ func test_time_scale_slows_the_whole_orbit() -> void:
     var moved_normal: float = normal.body.position.distance_to(start)
     var moved_slow: float = slow.body.position.distance_to(start)
     check(moved_slow > 0.0 and moved_slow < moved_normal * 0.5, "con un cuarto de ritmo recorre mucho menos")
+
+
+func test_phase_hold_is_validated_and_published() -> void:
+    for payload: Dictionary in [{}, {"on": 1}, {"on": "true"}]:
+        check(not _match.apply(0, Command.new(0, OrbitCommand.Kind.PHASE_HOLD, payload)), "se rechaza %s" % str(payload))
+    check(not _match.phase_held, "lo rechazado no cambia nada")
+    check(_match.apply(0, Command.new(0, OrbitCommand.Kind.PHASE_HOLD, {"on": true})), "on=true se acepta")
+    check(_match.phase_held, "queda mantenida")
+    var replica: OrbitMatch = OrbitMatch.new()
+    replica.restore(JSON.parse_string(JSON.stringify(_match.snapshot())) as Dictionary)
+    check(replica.phase_held, "la réplica la recibe por JSON")
+    _match.apply(0, Command.new(0, OrbitCommand.Kind.PHASE_HOLD, {"on": false}))
+    check(not _match.phase_held, "al soltar se apaga")
+    _match.apply(0, Command.new(0, OrbitCommand.Kind.PHASE_HOLD, {"on": true}))
+    _match.release_slot(0)
+    check(not _match.phase_held, "si la estación se va, se suelta")

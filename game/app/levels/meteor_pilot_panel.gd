@@ -2,7 +2,7 @@ class_name MeteorPilotPanel
 extends Node
 ## Lado del piloto en el nivel Meteoritos: un `DodgeField` del tamaño real de su recuadro, que maneja con las flechas.
 ## Sus flechas también se traducen a empuje y se envían al anfitrión como en `PilotPanel`. El vuelo (casco, resultado)
-## es local de este lado y no afecta a la estación. Enter reinicia al terminar. Aviso de viento solar, casco y tiempo se ofrecen al HUD con `hud_item()`.
+## es local de este lado y no afecta a la estación. Enter reinicia al terminar. La estación (tecla F) decide cuándo entra la nave en fase. Aviso de viento solar, fase, casco y tiempo se ofrecen al HUD con `hud_item()`.
 
 
 ## Como el primer planeta del original: densidad 1.0 y 68 s de tramo.
@@ -13,6 +13,7 @@ const SOLAR_WIND: float = 0.5
 const FIELD_SEED: int = 7301
 const HEARTBEAT_SECONDS: float = 0.25
 const HULL_BAR_WIDTH: float = 180.0
+const PHASE_BAR_WIDTH: float = 120.0
 const MESSAGE_OFFSET: Vector2 = Vector2(0.0, -20.0)
 
 var _client: MatchClient
@@ -24,6 +25,8 @@ var _heartbeat: CommandHeartbeat = CommandHeartbeat.new(HEARTBEAT_SECONDS)
 var _message: Label = Label.new()
 var _hud_row: HBoxContainer = HBoxContainer.new()
 var _hull_bar: MeterBar = MeterBar.new()
+var _phase_bar: MeterBar = MeterBar.new()
+var _phase_label: Label = Label.new()
 var _time_label: Label = Label.new()
 var _wind_label: Label = Label.new()
 var _wind_lamp: StatusLamp = StatusLamp.new()
@@ -43,6 +46,10 @@ func setup(client: MatchClient, input: InputSource) -> void:
     _wind_label.text = "Viento solar"
     _hud_row.add_child(_wind_label)
     _hud_row.add_child(_wind_lamp)
+    _phase_label.text = "Fase (F)"
+    _phase_bar.custom_minimum_size = Vector2(PHASE_BAR_WIDTH, 0.0)
+    _hud_row.add_child(_phase_label)
+    _hud_row.add_child(_phase_bar)
     _hud_row.add_child(_hull_bar)
     _hud_row.add_child(_time_label)
 
@@ -60,7 +67,8 @@ func _physics_process(delta: float) -> void:
         _start_run(area)
     var is_flying: bool = _field.status == DodgeField.Status.RUNNING
     var direction: Vector2 = _input.read_direction() if is_flying else Vector2.ZERO
-    _field.step(delta, direction)
+    var wants_phase: bool = is_flying and (_client.replica as OrbitMatch).phase_held
+    _field.step(delta, direction, wants_phase)
     _send_thrust(direction, delta)
     _restart_on_enter(area)
     _refresh(area)
@@ -77,6 +85,7 @@ func _start_run(area: Vector2) -> void:
             )
     _view.setup(_field)
     _hull_bar.setup(_field.hull)
+    _phase_bar.setup(_field.phase)
 
 
 func _send_thrust(direction: Vector2, delta: float) -> void:

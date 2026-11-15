@@ -18,4 +18,6 @@ static func roles() -> RoleTable:
     table.show_key(OrbitRole.Role.STATION, OrbitMatch.KEY_ORBIT)
     table.allow(OrbitRole.Role.PILOT, OrbitCommand.Kind.SET_THRUST)
     table.show_key(OrbitRole.Role.PILOT, OrbitMatch.KEY_FUEL)
+    table.allow(OrbitRole.Role.STATION, OrbitCommand.Kind.PHASE_HOLD)
+    table.show_key(OrbitRole.Role.PILOT, OrbitMatch.KEY_PHASE)
     return table

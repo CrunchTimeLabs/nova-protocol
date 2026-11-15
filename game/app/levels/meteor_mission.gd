@@ -40,7 +40,9 @@ func _panel_for(client: MatchClient) -> Node:
     if client.role != OrbitRole.Role.PILOT:
         _hud.add_left(_speed)
         client.snapshot_applied.connect(_on_station_snapshot.bind(client))
-        return super._panel_for(client)
+        var station: StationPanel = super._panel_for(client) as StationPanel
+        station.enable_phase_key()
+        return station
     var pilot: MeteorPilotPanel = MeteorPilotPanel.new()
     # Con un solo teclado (pantalla dividida) el piloto usa las flechas.
     var scheme: InputSource.Scheme = InputSource.Scheme.ARROWS if options.mode == SessionOptions.Mode.SPLIT_SCREEN else InputSource.Scheme.BOTH

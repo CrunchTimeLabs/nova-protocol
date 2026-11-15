@@ -21,13 +21,17 @@ const MAX_THRUST_LENGTH: float = 1.0
 ## Claves de la instantánea: cada rol ve las suyas.
 const KEY_ORBIT: String = "orbit"
 const KEY_FUEL: String = "fuel"
+const KEY_PHASE: String = "phase"
 
 var body: DynamicBody
+## Hay alguna estación manteniendo el salto de fase (el piloto lo lee de su réplica).
+var phase_held: bool = false
 
 var _manual: ManualThrustController = ManualThrustController.new()
 var _fuel: ResourceMeter = ResourceMeter.new(FUEL_CAPACITY, FUEL_CAPACITY)
 var _attractors: Array[CentralGravity] = []
 var _thrusts: Dictionary = {}    # int (slot) -> Vector2
+var _phase_holds: Dictionary = {}    # int (slot) -> bool
 var _time_scale: float
 
 
@@ -56,8 +60,11 @@ func fuel_ratio() -> float:
     return _fuel.ratio()
 
 
-## SET_THRUST con {"x", "y"}: aceleración que pide el jugador. Cualquier otra cosa se rechaza sin cambiar nada.
+## SET_THRUST con {"x", "y"}: aceleración que pide el jugador; PHASE_HOLD con {"on"}: mantener la fase.
+## Cualquier otra cosa se rechaza sin cambiar nada.
 func apply(slot: int, command: Command) -> bool:
+    if command.kind == OrbitCommand.Kind.PHASE_HOLD:
+        return _apply_phase_hold(slot, command)
     if command.kind != OrbitCommand.Kind.SET_THRUST:
         return false
     var raw_x: Variant = command.payload.get("x")
@@ -71,6 +78,15 @@ func apply(slot: int, command: Command) -> bool:
     return true
 
 
+func _apply_phase_hold(slot: int, command: Command) -> bool:
+    var raw_on: Variant = command.payload.get("on")
+    if not raw_on is bool:
+        return false
+    _phase_holds[slot] = raw_on
+    phase_held = _phase_holds.values().has(true)
+    return true
+
+
 func step(delta: float) -> void:
     var total: Vector2 = Vector2.ZERO
     for thrust: Variant in _thrusts.values():
@@ -81,13 +97,15 @@ func step(delta: float) -> void:
 
 func release_slot(slot: int) -> void:
     _thrusts.erase(slot)
+    _phase_holds.erase(slot)
+    phase_held = _phase_holds.values().has(true)
 
 
 func snapshot() -> Dictionary:
     var saved: Dictionary = body.snapshot()
     var fuel: float = float(saved["fuel"])
     saved.erase("fuel")
-    return {KEY_ORBIT: saved, KEY_FUEL: fuel}
+    return {KEY_ORBIT: saved, KEY_FUEL: fuel, KEY_PHASE: phase_held}
 
 
 ## Acepta instantáneas parciales: un jugador solo recibe las claves de su rol.
@@ -96,3 +114,5 @@ func restore(saved: Dictionary) -> void:
         body.restore(saved[KEY_ORBIT] as Dictionary)
     if saved.has(KEY_FUEL):
         _fuel.set_value(float(saved[KEY_FUEL]))
+    if saved.has(KEY_PHASE):
+        phase_held = bool(saved[KEY_PHASE])

@@ -9,6 +9,8 @@ Campo de esquivar: una nave dentro de un recuadro de tamaño dado y rocas que cr
 - DADO un campo CUANDO el casco llega a 0 ENTONCES se destruye; si pasa `duration` ENTONCES llega; terminado, ya no cambia.
 - DADO la misma semilla y los mismos movimientos ENTONCES el resultado es el mismo.
 - DADO `wind` > 0 CUANDO pasa el intervalo ENTONCES nace una onda expansiva fuera del borde izquierdo o derecho que crece y golpea una sola vez a la nave al alcanzarla (`DodgeWave`); `wave_warning` indica que hay una en camino.
+- DADO `wants_phase` y carga CUANDO pasa el tiempo ENTONCES la nave hace un salto de fase: intangible (no la dañan rocas ni ondas), más rápida, y gasta carga; sin fase la carga se recarga despacio.
+- DADO una onda CUANDO su banda (con grosor `DodgeWave.THICKNESS`) cubre la nave sin protección ENTONCES golpea una sola vez.
 
 ## Qué reutilizar
 - `DodgeField` (entidad, tamaño y densidad como parámetros), `DodgeRock`, `DodgeWave` (viento solar), y la vista `DodgeView`.

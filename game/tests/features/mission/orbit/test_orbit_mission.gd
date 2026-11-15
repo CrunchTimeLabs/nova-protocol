@@ -19,3 +19,11 @@ func test_every_role_is_configured() -> void:
     var table: RoleTable = OrbitMission.roles()
     for role: int in OrbitRole.Role.values():
         check(table.has_role(role), "el rol %s tiene permisos o visibilidad" % OrbitRole.Role.find_key(role))
+
+
+func test_only_the_station_holds_phase_and_the_pilot_sees_it() -> void:
+    var table: RoleTable = OrbitMission.roles()
+    check(table.can_send(OrbitRole.Role.STATION, OrbitCommand.Kind.PHASE_HOLD), "la estación puede mantener la fase")
+    check(not table.can_send(OrbitRole.Role.PILOT, OrbitCommand.Kind.PHASE_HOLD), "el piloto no")
+    var seen: Dictionary = table.filter(OrbitRole.Role.PILOT, {OrbitMatch.KEY_PHASE: true, OrbitMatch.KEY_ORBIT: {}})
+    check(seen.has(OrbitMatch.KEY_PHASE) and not seen.has(OrbitMatch.KEY_ORBIT), "el piloto recibe la fase y no la órbita")
