@@ -27,6 +27,15 @@ const LEFT_PANEL := Rect2(16, 68, 196, 336)
 const RESOURCE_PANEL := Rect2(16, 414, 196, 214)
 const RIGHT_PANEL := Rect2(812, 68, 196, 560)
 const STORE_ROW := 128.0
+## Alto para el que está maquetada la pantalla; si el recuadro es más alto, el resto se reparte (ver `_layout`).
+const DESIGN_HEIGHT := 640.0
+## Cuánto del alto sobrante recibe cada zona (suman 1.0 entre las que se apilan).
+const EXTRA_BELT := 0.15
+const EXTRA_CARDS := 0.30
+const EXTRA_BUFFER := 0.70
+const EXTRA_LEFT_PANEL := 0.5
+const EXTRA_STORE_ROW := 0.25
+const EMBER_MARGIN := 40.0
 const HOURGLASS_AT := Vector2(58, 106)
 const MOVE_TIME := 0.45
 const GHOST_TIME := 0.6
@@ -40,6 +49,14 @@ const EMBERS := 40
 ## Si es false, la pantalla no reinicia su sesión sola (ver `restart_requested`).
 var handles_restart: bool = true
 
+## Maqueta calculada para el alto real del recuadro (con 640 de alto vale lo mismo que las constantes).
+var _belt_y: float = BELT_Y
+var _card_top: float = CARD_TOP
+var _buffer: Rect2 = BUFFER
+var _left_panel: Rect2 = LEFT_PANEL
+var _resource_panel: Rect2 = RESOURCE_PANEL
+var _right_panel: Rect2 = RIGHT_PANEL
+var _store_row: float = STORE_ROW
 var _run: FoundryRun
 var _sfx: FoundrySfx
 var _time: float = 0.0
@@ -63,6 +80,8 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    resized.connect(_layout)
+    _layout()
     _sfx = FoundrySfx.new()
     add_child(_sfx)
     _rng.randomize()
@@ -88,6 +107,23 @@ func restart(random: GameRandom) -> void:
     _ended_at = -1.0
     _last_tick = -1
     _sfx.set_furnace(true)
+
+
+## Reparte el alto que sobra sobre el de diseño: la tolva, las tarjetas, el cuadro de texto y los paneles bajan, así
+## la pantalla ocupa todo el recuadro en vez de quedarse encogida arriba. Con el alto de diseño no cambia nada.
+func _layout() -> void:
+    var extra: float = maxf(size.y - DESIGN_HEIGHT, 0.0)
+    _belt_y = BELT_Y + extra * EXTRA_BELT
+    _card_top = CARD_TOP + extra * EXTRA_CARDS
+    _buffer = Rect2(BUFFER.position + Vector2(0.0, extra * EXTRA_BUFFER), BUFFER.size)
+    _left_panel = Rect2(LEFT_PANEL.position, LEFT_PANEL.size + Vector2(0.0, extra * EXTRA_LEFT_PANEL))
+    _resource_panel = Rect2(
+            RESOURCE_PANEL.position + Vector2(0.0, extra * EXTRA_LEFT_PANEL),
+            RESOURCE_PANEL.size + Vector2(0.0, extra * (1.0 - EXTRA_LEFT_PANEL)),
+            )
+    _right_panel = Rect2(RIGHT_PANEL.position, RIGHT_PANEL.size + Vector2(0.0, extra))
+    _store_row = STORE_ROW + extra * EXTRA_STORE_ROW
+    queue_redraw()
 
 
 func run() -> FoundryRun:
@@ -215,7 +251,7 @@ func _card_of(spawn: FoundryRun.Spawn) -> Dictionary:
 # --- Animación ------------------------------------------------------------------------------------------
 
 func _hopper_target(index: int, count: int) -> Vector2:
-    return Vector2(BELT_CENTER + (float(index) - float(count - 1) / 2.0) * BELT_SLOT, BELT_Y - 12.0 * HOPPER_SCALE)
+    return Vector2(BELT_CENTER + (float(index) - float(count - 1) / 2.0) * BELT_SLOT, _belt_y - 12.0 * HOPPER_SCALE)
 
 
 func _update_hopper(delta: float) -> void:
@@ -237,7 +273,7 @@ func _update_hopper(delta: float) -> void:
 
 func _card_slot(index: int, count: int) -> Vector2:
     var total: float = CARD_SIZE.x * float(count) + CARD_GAP * float(count - 1)
-    return Vector2(BELT_CENTER - total / 2.0 + float(index) * (CARD_SIZE.x + CARD_GAP), CARD_TOP)
+    return Vector2(BELT_CENTER - total / 2.0 + float(index) * (CARD_SIZE.x + CARD_GAP), _card_top)
 
 
 func _update_cards(delta: float) -> void:
@@ -261,7 +297,7 @@ func _card_image_center(card: Dictionary) -> Vector2:
 
 func _store_icon(mineral: FoundryRun.Mineral) -> Vector2:
     var row: int = FoundryArt.ORDER.find(mineral)
-    return RIGHT_PANEL.position + Vector2(40, 74.0 + float(row) * STORE_ROW)
+    return _right_panel.position + Vector2(40, 74.0 + float(row) * _store_row)
 
 
 func _update_flyers() -> void:
@@ -273,7 +309,7 @@ func _update_flyers() -> void:
 
 
 func _new_ember(anywhere: bool) -> Dictionary:
-    var y: float = _rng.randf_range(200.0, 600.0) if anywhere else _rng.randf_range(570.0, 600.0)
+    var y: float = _rng.randf_range(200.0, size.y - EMBER_MARGIN) if anywhere else _rng.randf_range(size.y - EMBER_MARGIN - 30.0, size.y - EMBER_MARGIN)
     return {
         "pos": Vector2(_rng.randf_range(0.0, 1024.0), y),
         "speed": _rng.randf_range(18.0, 46.0),
@@ -307,7 +343,9 @@ func _update_ticks() -> void:
 
 func _draw() -> void:
     var background: Texture2D = FoundryArt.texture(FoundryArt.BACKGROUND)
-    draw_texture_rect(background, Rect2(Vector2.ZERO, background.get_size() * SCALE), false)
+    var cover: float = maxf(size.x / background.get_width(), size.y / background.get_height())
+    var cover_size: Vector2 = background.get_size() * cover
+    draw_texture_rect(background, Rect2(Vector2((size.x - cover_size.x) / 2.0, 0.0), cover_size), false)
     var flicker: float = 0.5 + 0.25 * sin(_time * 7.0) + 0.25 * sin(_time * 13.3)
     draw_circle(FURNACE_MOUTH, 64.0 + 8.0 * flicker, Color(1.0, 0.5, 0.15, 0.06 + 0.06 * flicker))
     _draw_embers()
@@ -340,7 +378,7 @@ func _draw_top_bar() -> void:
 
 
 func _draw_hopper() -> void:
-    UiDraw.text(self, Vector2(226, BELT_Y + 10.0), "TOLVA · EN ESPERA", 11, Color(FoundryArt.TEXT, 0.75), true)
+    UiDraw.text(self, Vector2(226, _belt_y + 10.0), "TOLVA · EN ESPERA", 11, Color(FoundryArt.TEXT, 0.75), true)
     var count: int = _run.waiting.size()
     for index: int in count:
         var spawn: FoundryRun.Spawn = _run.waiting[index]
@@ -354,7 +392,7 @@ func _draw_hopper() -> void:
 func _draw_cards() -> void:
     if _cards.is_empty() and not _run.is_ended():
         var dots: String = ".".repeat(1 + int(_time * 3.0) % 3)
-        UiDraw.text_centered(self, BELT_CENTER, CARD_TOP + 100.0, "Llegan minerales" + dots, 16, FoundryArt.MUTED, true)
+        UiDraw.text_centered(self, BELT_CENTER, _card_top + 100.0, "Llegan minerales" + dots, 16, FoundryArt.MUTED, true)
         return
     for card: Dictionary in _cards:
         _draw_card(card)
@@ -435,7 +473,7 @@ func _draw_name(center_x: float, top: float, mineral: FoundryRun.Mineral, alpha:
 
 func _draw_buffer() -> void:
     var shake: float = sin(_wrong * 60.0) * 8.0 * (_wrong / WRONG_TIME)
-    var rect: Rect2 = Rect2(BUFFER.position + Vector2(shake, 0.0), BUFFER.size)
+    var rect: Rect2 = Rect2(_buffer.position + Vector2(shake, 0.0), _buffer.size)
     var edge: Color = FoundryArt.DANGER if _wrong > 0.0 or _run.blocked else FoundryArt.EDGE
     UiDraw.panel(self, rect, Color(0.05, 0.03, 0.025, 0.9), edge)
     if _typed.is_empty():
@@ -450,8 +488,8 @@ func _draw_buffer() -> void:
 
 
 func _draw_hourglass_panel() -> void:
-    FoundryArt.panel(self, LEFT_PANEL)
-    UiDraw.text_centered(self, LEFT_PANEL.get_center().x, LEFT_PANEL.position.y + 12.0, "TIEMPO DEL NIVEL", 13, FoundryArt.TITLE, true)
+    FoundryArt.panel(self, _left_panel)
+    UiDraw.text_centered(self, _left_panel.get_center().x, _left_panel.position.y + 12.0, "TIEMPO DEL NIVEL", 13, FoundryArt.TITLE, true)
     var ratio: float = _run.remaining / FoundryRun.TIME_LIMIT
     HourglassDraw.draw(self, HOURGLASS_AT, SCALE, ratio, _time, not _run.is_ended())
     var warning: bool = _run.remaining <= WARNING_TIME and not _run.is_ended()
@@ -461,13 +499,13 @@ func _draw_hourglass_panel() -> void:
         var beat: float = fmod(_run.remaining, 1.0)
         color = FoundryArt.DANGER
         font_size = 26 + int(6.0 * beat)
-    UiDraw.text_centered(self, LEFT_PANEL.get_center().x, LEFT_PANEL.end.y - 40.0, "%.1f s" % _run.remaining, font_size, color, true)
+    UiDraw.text_centered(self, _left_panel.get_center().x, _left_panel.end.y - 40.0, "%.1f s" % _run.remaining, font_size, color, true)
 
 
 func _draw_resources() -> void:
-    FoundryArt.panel(self, RESOURCE_PANEL)
-    var x: float = RESOURCE_PANEL.position.x + 14.0
-    var y: float = RESOURCE_PANEL.position.y + 12.0
+    FoundryArt.panel(self, _resource_panel)
+    var x: float = _resource_panel.position.x + 14.0
+    var y: float = _resource_panel.position.y + 12.0
     UiDraw.text(self, Vector2(x, y), "RECURSOS", 13, FoundryArt.TITLE, true)
     _resource_line(y + 30.0, "Total", str(_run.resources), FoundryArt.TEXT)
     var lost_color: Color = FoundryArt.DANGER if _run.lost > 0 else FoundryArt.MUTED
@@ -480,23 +518,23 @@ func _draw_resources() -> void:
             "Cada mineral nuevo gasta recursos. Si se enfría sin recogerlo, no se devuelven.",
             11,
             FoundryArt.MUTED,
-            RESOURCE_PANEL.size.x - 28.0,
+            _resource_panel.size.x - 28.0,
             )
 
 
 func _resource_line(y: float, label: String, value: String, color: Color) -> void:
-    var x: float = RESOURCE_PANEL.position.x + 14.0
+    var x: float = _resource_panel.position.x + 14.0
     UiDraw.text(self, Vector2(x, y), label, 12, FoundryArt.MUTED)
-    UiDraw.text(self, Vector2(x, y - 3.0), value, 18, color, true, HORIZONTAL_ALIGNMENT_RIGHT, RESOURCE_PANEL.size.x - 28.0)
+    UiDraw.text(self, Vector2(x, y - 3.0), value, 18, color, true, HORIZONTAL_ALIGNMENT_RIGHT, _resource_panel.size.x - 28.0)
 
 
 func _draw_store() -> void:
-    FoundryArt.panel(self, RIGHT_PANEL)
-    UiDraw.text_centered(self, RIGHT_PANEL.get_center().x, RIGHT_PANEL.position.y + 12.0, "ALMACÉN", 13, FoundryArt.TITLE, true)
+    FoundryArt.panel(self, _right_panel)
+    UiDraw.text_centered(self, _right_panel.get_center().x, _right_panel.position.y + 12.0, "ALMACÉN", 13, FoundryArt.TITLE, true)
     for row: int in FoundryArt.ORDER.size():
         var mineral: FoundryRun.Mineral = FoundryArt.ORDER[row]
-        var top: float = RIGHT_PANEL.position.y + 36.0 + float(row) * STORE_ROW
-        var row_rect: Rect2 = Rect2(RIGHT_PANEL.position.x + 10.0, top, RIGHT_PANEL.size.x - 20.0, STORE_ROW - 10.0)
+        var top: float = _right_panel.position.y + 36.0 + float(row) * _store_row
+        var row_rect: Rect2 = Rect2(_right_panel.position.x + 10.0, top, _right_panel.size.x - 20.0, _store_row - 10.0)
         var pulse: float = float(_pulse.get(mineral, 0.0)) / 0.5
         draw_rect(row_rect, Color(FoundryArt.color(mineral), 0.06 + 0.2 * pulse))
         draw_rect(Rect2(row_rect.position, Vector2(4.0, row_rect.size.y)), FoundryArt.color(mineral))
@@ -514,10 +552,10 @@ func _draw_store() -> void:
                 HORIZONTAL_ALIGNMENT_RIGHT,
                 row_rect.size.x - 12.0,
                 )
-    var total_top: float = RIGHT_PANEL.end.y - 90.0
-    draw_line(Vector2(RIGHT_PANEL.position.x + 14, total_top), Vector2(RIGHT_PANEL.end.x - 14, total_top), Color(FoundryArt.EDGE, 0.5), 1.0)
-    UiDraw.text_centered(self, RIGHT_PANEL.get_center().x, total_top + 12.0, "VALOR TOTAL", 12, FoundryArt.MUTED, true)
-    UiDraw.text_centered(self, RIGHT_PANEL.get_center().x, total_top + 32.0, str(_run.value), 32, FoundryArt.TITLE, true)
+    var total_top: float = _right_panel.end.y - 90.0
+    draw_line(Vector2(_right_panel.position.x + 14, total_top), Vector2(_right_panel.end.x - 14, total_top), Color(FoundryArt.EDGE, 0.5), 1.0)
+    UiDraw.text_centered(self, _right_panel.get_center().x, total_top + 12.0, "VALOR TOTAL", 12, FoundryArt.MUTED, true)
+    UiDraw.text_centered(self, _right_panel.get_center().x, total_top + 32.0, str(_run.value), 32, FoundryArt.TITLE, true)
 
 
 func _draw_flyers() -> void:
@@ -538,7 +576,8 @@ func _draw_flyers() -> void:
 func _draw_summary() -> void:
     var t: float = clampf((_time - _ended_at) / 0.5, 0.0, 1.0)
     draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.01, 0.01, 0.72 * t))
-    var rect: Rect2 = Rect2(Vector2(262, 120 + 20.0 * (1.0 - t)), Vector2(500, 400))
+    var summary_top: float = 120.0 + (size.y - DESIGN_HEIGHT) * 0.5
+    var rect: Rect2 = Rect2(Vector2(262, summary_top + 20.0 * (1.0 - t)), Vector2(500, 400))
     UiDraw.panel(self, rect, Color(0.08, 0.045, 0.035, 0.97 * t), Color(FoundryArt.TITLE, t))
     var cx: float = rect.get_center().x
     UiDraw.text_centered(self, cx, rect.position.y + 22.0, "¡SE ACABÓ LA ARENA!", 28, Color(FoundryArt.TITLE, t), true)

@@ -8,8 +8,10 @@ extends Node
 
 const SEED: int = 2026
 ## Tamaño para el que está maquetada cada pantalla (se escala conservando la proporción); ajustable por lado.
-const FOUNDRY_SIZE: Vector2 = Vector2(1024, 640)
-const TEMPERATURE_SIZE: Vector2 = Vector2(1024, 640)
+## La fundición reparte el alto que le sobre (ver `FoundryScreen._layout`): se maqueta con la proporción de su recuadro (media ventana).
+const FOUNDRY_SIZE: Vector2 = Vector2(1024, 1240)
+## La temperatura se adapta al alto con contenedores (el reloj se estira), así que usa la misma proporción de recuadro.
+const TEMPERATURE_SIZE: Vector2 = Vector2(1024, 1240)
 const FOUNDRY_TITLE: String = "Fundición — teclea los minerales"
 ## Reloj de la temperatura (solo presentación): amplía las zonas de los puntos de fusión. Valor (°C) → posición en el arco.
 const DIAL_STOP_VALUES: Array[float] = [0.0, 800.0, 1000.0, 1100.0, 1500.0, 1600.0, 1800.0]
