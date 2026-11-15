@@ -5,6 +5,9 @@ extends OrbitMissionLab
 ## (derecha). Pantalla dividida por defecto; `-- --lan` para red local.
 
 
+## Ritmo de la órbita respecto al normal: menor que 1 hace que la nave recorra la trayectoria más despacio.
+const ORBIT_TIME_SCALE: float = 0.3
+
 var _hud: SplitHud = SplitHud.new()
 var _speed: Label = Label.new()
 
@@ -22,6 +25,15 @@ func _ready() -> void:
     var mode: Label = Label.new()
     mode.text = _mode_text()
     _hud.add_center(mode)
+
+
+func _build_session(session_options: SessionOptions) -> MissionSession:
+    return MissionSession.build(
+            session_options,
+            func() -> MatchRules: return OrbitMatch.new(ORBIT_TIME_SCALE),
+            OrbitMission.roles(),
+            OrbitMission.ROLE_ORDER,
+            )
 
 
 func _panel_for(client: MatchClient) -> Node:
