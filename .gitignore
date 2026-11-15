@@ -35,3 +35,6 @@ local/
 
 # Marcadores de carpeta vacía (no se versionan)
 .gitkeep
+
+# CodeGraph: índice local de cada persona
+.codegraph/
