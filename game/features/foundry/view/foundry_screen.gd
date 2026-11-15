@@ -448,15 +448,14 @@ func _draw_resources() -> void:
     var x: float = RESOURCE_PANEL.position.x + 14.0
     var y: float = RESOURCE_PANEL.position.y + 12.0
     UiDraw.text(self, Vector2(x, y), "RECURSOS", 13, FoundryArt.TITLE, true)
-    _resource_line(y + 30.0, "Gastados", str(_run.resources_used), FoundryArt.TEXT)
-    var lost_color: Color = FoundryArt.DANGER if _run.resources_lost > 0 else FoundryArt.MUTED
+    _resource_line(y + 30.0, "Total", str(_run.resources), FoundryArt.TEXT)
+    var lost_color: Color = FoundryArt.DANGER if _run.lost > 0 else FoundryArt.MUTED
     if _lost_flash > 0.0:
         lost_color = lost_color.lightened(0.5 * _lost_flash)
-    _resource_line(y + 56.0, "Perdidos", str(_run.resources_lost), lost_color)
-    _resource_line(y + 82.0, "Minerales perdidos", str(_run.lost), lost_color)
+    _resource_line(y + 56.0, "Perdidos", str(_run.lost), lost_color)
     UiDraw.wrapped(
             self,
-            Vector2(x, y + 118.0),
+            Vector2(x, y + 92.0),
             "Cada mineral nuevo gasta recursos. Si se enfría sin recogerlo, no se devuelven.",
             11,
             FoundryArt.MUTED,
