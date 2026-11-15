@@ -155,17 +155,23 @@ static func _mineral(canvas: CanvasItem, run: CollectionRun, spawn: TimedSpawns.
         canvas.draw_line(spark - Vector2(0, 3), spark + Vector2(0, 3), Color(1, 1, 1, twinkle), 1.0)
 
 
+## Cochecito visto desde arriba, girado hacia donde va, con la carrocería del color pedido (otros modos de juego).
+static func car(canvas: CanvasItem, position: Vector2, heading: float, scale: float, body: Color = CAR_BODY, light: bool = true) -> void:
+    _car(canvas, position, heading, scale, body, light)
+
+
 ## Cochecito visto desde arriba, girado hacia donde va.
-static func _car(canvas: CanvasItem, car: Vector2, heading: float, scale: float) -> void:
-    var beam: PackedVector2Array = _turned([Vector2(11, -5), Vector2(46, -20), Vector2(46, 20), Vector2(11, 5)], car, heading, scale)
-    canvas.draw_colored_polygon(beam, HEADLIGHT)
+static func _car(canvas: CanvasItem, car: Vector2, heading: float, scale: float, body: Color = CAR_BODY, light: bool = true) -> void:
+    if light:
+        var beam: PackedVector2Array = _turned([Vector2(11, -5), Vector2(46, -20), Vector2(46, 20), Vector2(11, 5)], car, heading, scale)
+        canvas.draw_colored_polygon(beam, HEADLIGHT)
     canvas.draw_colored_polygon(_turned([Vector2(-11, -9), Vector2(13, -9), Vector2(13, 11), Vector2(-11, 11)], car + Vector2(2, 3) * scale, heading, scale), Color(0, 0, 0, 0.35))
     for wheel: Vector2 in [Vector2(-7, -11), Vector2(7, -11), Vector2(-7, 11), Vector2(7, 11)]:
         canvas.draw_colored_polygon(_turned([Vector2(-4, -2.5), Vector2(4, -2.5), Vector2(4, 2.5), Vector2(-4, 2.5)], car + wheel.rotated(heading) * scale, heading, scale), CAR_DARK)
-    canvas.draw_colored_polygon(_turned([Vector2(-11, -8), Vector2(9, -8), Vector2(12, -4), Vector2(12, 4), Vector2(9, 8), Vector2(-11, 8)], car, heading, scale), CAR_BODY)
+    canvas.draw_colored_polygon(_turned([Vector2(-11, -8), Vector2(9, -8), Vector2(12, -4), Vector2(12, 4), Vector2(9, 8), Vector2(-11, 8)], car, heading, scale), body)
     canvas.draw_colored_polygon(_turned([Vector2(1, -5), Vector2(7, -4), Vector2(7, 4), Vector2(1, 5)], car, heading, scale), CAR_GLASS)
-    canvas.draw_colored_polygon(_turned([Vector2(-9, -6), Vector2(-3, -6), Vector2(-3, 6), Vector2(-9, 6)], car, heading, scale), CAR_BODY.darkened(0.25))
-    canvas.draw_polyline(_turned([Vector2(-11, -8), Vector2(9, -8), Vector2(12, -4), Vector2(12, 4), Vector2(9, 8), Vector2(-11, 8), Vector2(-11, -8)], car, heading, scale), CAR_BODY.darkened(0.5), 1.2, true)
+    canvas.draw_colored_polygon(_turned([Vector2(-9, -6), Vector2(-3, -6), Vector2(-3, 6), Vector2(-9, 6)], car, heading, scale), body.darkened(0.25))
+    canvas.draw_polyline(_turned([Vector2(-11, -8), Vector2(9, -8), Vector2(12, -4), Vector2(12, 4), Vector2(9, 8), Vector2(-11, 8), Vector2(-11, -8)], car, heading, scale), body.darkened(0.5), 1.2, true)
 
 
 static func _turned(points: Array[Vector2], center: Vector2, angle: float, scale: float) -> PackedVector2Array:

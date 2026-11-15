@@ -158,8 +158,7 @@ static func wavelength_color(nm: float, brightness: float = 1.0) -> Color:
     elif nm > 700.0 and nm <= 780.0:
         attenuation = 0.3 + 0.7 * (780.0 - nm) / 80.0
     var k: float = attenuation * clampf(brightness, 0.0, 1.0)
-    var gray: float = (0.299 * rgb.x + 0.587 * rgb.y + 0.114 * rgb.z) * k
-    return Color(gray, gray, gray)
+    return Color(rgb.x * k, rgb.y * k, rgb.z * k)
 
 
 ## Rampa para ejes que no son longitudes de onda: violeta -> rojo.

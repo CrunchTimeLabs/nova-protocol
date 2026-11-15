@@ -7,10 +7,11 @@ extends RefCounted
 const PANEL := Rect2(16, 68, 268, 560)
 const PADDING := 12.0
 const HEADER := 18.0
-const CARD := Vector2(76, 78)
-const GAP := 8.0
+const CARD := Vector2(56, 76)
+const GAP := 6.0
 const ROW_SPACING := 10.0
-const SPRITE_BOX := Vector2(64, 48)
+const SPRITE_BOX := Vector2(50, 46)
+const LOCKED := Color(0.02, 0.02, 0.05, 0.72)
 const GLASS := Color(0.03, 0.03, 0.09, 0.8)
 const EDGE := Color(0.6, 0.75, 1.0, 0.35)
 const ACCENT := Color(0.98, 0.78, 0.3)
@@ -43,7 +44,12 @@ static func part_at(point: Vector2) -> int:
     return -1
 
 
-static func draw(canvas: CanvasItem, build: RocketBuild, hover: int, dragging: int) -> void:
+## `available` vacío = todas disponibles; si no, las demás se ven con candado.
+static func is_available(part: int, available: Array[int]) -> bool:
+    return available.is_empty() or available.has(part)
+
+
+static func draw(canvas: CanvasItem, build: RocketBuild, hover: int, dragging: int, available: Array[int] = []) -> void:
     UiDraw.panel(canvas, PANEL, GLASS, EDGE)
     var rects: Dictionary = card_rects()
     for section: RocketParts.Section in RocketParts.sections():
@@ -51,6 +57,16 @@ static func draw(canvas: CanvasItem, build: RocketBuild, hover: int, dragging: i
         UiDraw.text(canvas, Vector2(first.position.x, first.position.y - HEADER + 2.0), String(RocketParts.SECTION_TITLES[section]).to_upper(), 11, ACCENT, true)
     for part: int in rects.keys():
         _card(canvas, rects[part], part as RocketParts.Part, part == hover, build.part_at(RocketParts.section_of(part as RocketParts.Part)) == part, part == dragging)
+        if not is_available(part, available):
+            _lock(canvas, rects[part])
+
+
+## Pieza aún no ganada en la fundición: oscura y con candado.
+static func _lock(canvas: CanvasItem, rect: Rect2) -> void:
+    canvas.draw_rect(rect, LOCKED)
+    var at: Vector2 = rect.get_center() - Vector2(0, 8)
+    canvas.draw_rect(Rect2(at - Vector2(8, 2), Vector2(16, 12)), Color(0.75, 0.75, 0.82))
+    canvas.draw_arc(at - Vector2(0, 2), 5.0, PI, TAU, 10, Color(0.75, 0.75, 0.82), 2.5)
 
 
 static func _card(canvas: CanvasItem, rect: Rect2, part: RocketParts.Part, is_hover: bool, is_in_use: bool, is_dragging: bool) -> void:

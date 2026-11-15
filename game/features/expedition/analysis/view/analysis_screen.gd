@@ -28,11 +28,11 @@ func _ready() -> void:
 
 
 func _rack_rect(index: int) -> Rect2:
-    return Rect2(50 + (index % 4) * 296, 200 + (index / 4) * 96, 284, 88)
+    return Rect2(50 + (index % 4) * 296, 196 + (index / 4) * 128, 284, 120)
 
 
 func _window_rect(index: int) -> Rect2:
-    return Rect2(50 + (index % 2) * 600, 268 + (index / 2) * 124, 578, 108)
+    return Rect2(50 + (index % 2) * 600, 262 + (index / 2) * 144, 578, 136)
 
 
 ## Rehace las vistas de patrones y los botones del paso actual.
@@ -49,18 +49,18 @@ func _rebuild() -> void:
         AnalysisSession.Step.CHOOSE:
             for i: int in session.pending.size():
                 var rect: Rect2 = _rack_rect(i)
-                _add_view(PatternView.new(spec.pattern(session.pending[i]), spec, false), Rect2(rect.position + Vector2(12, 46), Vector2(rect.size.x - 24, 34)))
+                _add_view(PatternView.new(spec.pattern(session.pending[i]), spec, false), Rect2(rect.position + Vector2(12, 44), Vector2(rect.size.x - 24, 66)))
             _buttons.append(make_button("CANCELAR", Rect2(40, size.y - 66, 210, 46), UiPalette.BORDER_DIM, _cancel))
         AnalysisSession.Step.COMPARE, AnalysisSession.Step.DONE:
             var held: PatternSpec = spec.pattern(session.chosen)
-            _add_view(PatternView.new(held, spec, ruler), Rect2(50, 168, size.x - 100, 58))
+            _add_view(PatternView.new(held, spec, ruler), Rect2(50, 166, size.x - 100, 66))
             var marks: PackedFloat32Array = held.positions() if ruler else PackedFloat32Array()
             for i: int in session.windows.size():
                 var rect: Rect2 = _window_rect(i)
                 var view: PatternView = PatternView.new(session.windows[i], spec, ruler, 1 + i)
                 view.marks = marks
                 view.dimmed = session.discarded.has(i)
-                _add_view(view, Rect2(rect.position + Vector2(42, 8), Vector2(rect.size.x - 54, 92)))
+                _add_view(view, Rect2(rect.position + Vector2(42, 8), Vector2(rect.size.x - 54, 120)))
             if session.step == AnalysisSession.Step.COMPARE:
                 _buttons.append(make_button("< CAMBIAR PATRÓN", Rect2(40, size.y - 66, 210, 46), UiPalette.BORDER_DIM, _back))
                 _buttons.append(make_button("NINGUNA COINCIDE — DECLARAR AUSENTE", Rect2(size.x - 440, size.y - 66, 400, 46), UiPalette.WARNING, _declare_absent))
@@ -143,7 +143,8 @@ func _draw_header() -> void:
     var spec: AnalyzerSpec = session.analyzer
     var planet: PlanetSpec = session.planet
     UiPalette.header(self, HEADER)
-    UiPalette.text(self, Vector2(30, 12), "%s — %s" % [spec.name.to_upper(), planet.name], UiPalette.TITLE, UiPalette.glow(UiPalette.BORDER, 1.2), true)
+    UiPalette.text(self, Vector2(30, 12), "%s — %s" % [spec.name.to_upper(), planet.name], UiPalette.TITLE, UiPalette.glow(UiPalette.instrument_color(spec.id), 1.2), true)
+    draw_rect(Rect2(0, HEADER - 4, size.x, 4), UiPalette.instrument_color(spec.id))
     UiPalette.text(self, Vector2(32, 50), "Mide: %s   |   eje: %s   |   rango %d a %d" % [spec.category, spec.axis_label, int(spec.axis_min), int(spec.axis_max)], UiPalette.SMALL, UiPalette.GRAY)
     var done_count: Vector2i = expedition.ledger.coverage(planet.id, spec.id)
     UiPalette.text(self, Vector2(32, 76), "Análisis de este aparato: %d      Identificados: %d/%d" % [expedition.ledger.analyses_left(planet.id, spec.id), done_count.x, done_count.y], UiPalette.SMALL, UiPalette.SCIENCE, true)
@@ -175,7 +176,7 @@ func _draw_windows(mouse: Vector2) -> void:
     UiPalette.text(self, Vector2(50, 140), "PATRÓN EN MANO: %s  %s" % [held.name, held.symbol], UiPalette.SUBTITLE, UiPalette.OK, true)
     var comparing: bool = session.step == AnalysisSession.Step.COMPARE
     if comparing:
-        UiPalette.text(self, Vector2(50, 236), "PASO 2 — las seis ventanas están medidas con el mismo aparato y se parecen a propósito. Solo una cae exactamente donde el patrón.", UiPalette.SMALL, UiPalette.WARNING)
+        UiPalette.text(self, Vector2(50, 238), "PASO 2 — las seis ventanas están medidas con el mismo aparato y se parecen a propósito. Solo una cae exactamente donde el patrón.", UiPalette.SMALL, UiPalette.WARNING)
     for i: int in session.windows.size():
         var rect: Rect2 = _window_rect(i)
         var discarded: bool = session.discarded.has(i)

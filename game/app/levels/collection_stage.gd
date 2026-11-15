@@ -1,18 +1,17 @@
 class_name CollectionStage
 extends Control
-## Etapa «Recolección» de «Start»: el mismo juego del lab (elegir dificultad, cochecito en el laberinto con su tutorial),
-## pero al llegar a la salida Enter pasa al siguiente nivel. R genera otro laberinto, Esc vuelve a la dificultad y, desde ahí, al menú.
-## Solo compone; las reglas viven en la feature `collection`.
+## Etapa «Recolección» de «Start», a dos jugadores en el mismo laberinto: elegir dificultad y conducir los dos
+## cochecitos (J1 WASD por la izquierda, J2 IJKL por la derecha). Al terminar, Enter guarda las menas en
+## `CampaignState` y pasa al siguiente nivel. R genera otro laberinto, Esc vuelve a la dificultad y, desde
+## ahí, al menú. Solo compone; las reglas viven en la feature `collection_duo`.
 
 
 const FIRST_SEED := 1
 
 var _seed_value: int = FIRST_SEED
 var _level: CollectionLevel.Level = CollectionLevel.Level.EASY
-var _session: CollectionSession
+var _run: DuoRun
 var _current: Control
-var _has_seen_intro: bool = false
-var _has_seen_cave_in: bool = false
 
 
 func _ready() -> void:
@@ -21,21 +20,15 @@ func _ready() -> void:
 
 
 func _show_level_select() -> void:
-    if _session != null:
-        _has_seen_cave_in = _session.has_seen_cave_in()
-    var select: LevelSelect = LevelSelect.new(_level)
+    var select: DuoLevelSelect = DuoLevelSelect.new(_level)
     select.chosen.connect(_on_level_chosen)
     select.exit_requested.connect(_on_exit)
     _swap(select)
 
 
 func _start() -> void:
-    var level: CollectionLevel = CollectionLevel.new(_level)
-    var run: CollectionRun = CollectionRun.new(CollectionScreen.board_origin(level), level, _seed_value)
-    _session = CollectionSession.new(run, not _has_seen_intro, not _has_seen_cave_in)
-    _has_seen_intro = true
-    var screen: CollectionScreen = CollectionScreen.new(_session)
-    screen.can_continue = true
+    _run = DuoRun.new(DuoLevel.new(_level), _seed_value)
+    var screen: DuoScreen = DuoScreen.new(_run)
     screen.restart_requested.connect(_on_restart)
     screen.exit_requested.connect(_show_level_select)
     screen.continue_requested.connect(_on_continue)
@@ -57,12 +50,15 @@ func _on_level_chosen(level: CollectionLevel.Level) -> void:
 
 
 func _on_restart() -> void:
-    _has_seen_cave_in = _session.has_seen_cave_in()
     _seed_value += 1
     _start()
 
 
+## Las menas de los dos pasan a la campaña (la fundición las usa).
 func _on_continue() -> void:
+    CampaignState.ores = {}
+    for ore: Ores.Ore in Ores.all():
+        CampaignState.add_ore(ore, _run.ore_total(ore))
     SceneRoutes.go_to(get_tree(), Campaign.next_after(SceneRoutes.COLLECTION_STAGE))
 
 

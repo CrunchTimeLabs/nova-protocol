@@ -1,0 +1,8 @@
+Cinemáticas de la campaña (10 s, 12 fps, 120 cuadros de 256x160 que el juego dibuja x4 con filtro nearest).
+Se renderizan con Blender 4 (EEVEE; necesita pantalla: DISPLAY=:1 en esta máquina) y se convierten con build_frames.py:
+  DISPLAY=:1 blender -b -P to_foundry.py -- /tmp/c1 && python3 build_frames.py /tmp/c1 to_foundry
+  DISPLAY=:1 blender -b -P to_workshop.py -- /tmp/c2 && python3 build_frames.py /tmp/c2 to_workshop
+  DISPLAY=:1 blender -b -P space_hazards.py -- /tmp/c3 && python3 build_frames.py /tmp/c3 space_hazards
+  DISPLAY=:1 blender -b -P arrival.py -- /tmp/c4 && python3 build_frames.py /tmp/c4 arrival
+cine_common.py tiene lo compartido (materiales, cajas, animación por canal, el cohete de 5 secciones).
+Los subtítulos y etiquetas no están en las imágenes: van en features/campaign/cinematics.gd.

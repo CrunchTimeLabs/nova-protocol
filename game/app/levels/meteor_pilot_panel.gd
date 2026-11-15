@@ -32,11 +32,19 @@ var _wind_label: Label = Label.new()
 var _wind_lamp: StatusLamp = StatusLamp.new()
 var _backdrop: ShaderBackdrop = ShaderBackdrop.new()
 var _has_reported_crash: bool = false
+## Mientras dura la presentación del nivel la nave no vuela.
+var paused: bool = false
+var _rocket: Array[RocketParts.Part] = RocketSprite.parts_from(CampaignState.rocket)
+var _build: RocketBuild = RocketBuild.new()
 
 
 func setup(client: MatchClient, input: InputSource) -> void:
     _client = client
     _input = input
+    for part: RocketParts.Part in _rocket:
+        _build.place(part)
+    _view.ship_painter = _paint_ship
+    _view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     add_child(_backdrop)
     add_child(_view)
     _message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -66,7 +74,7 @@ func _physics_process(delta: float) -> void:
     if _field == null or _field.field_size != area:
         _start_run(area)
     var replica: OrbitMatch = _client.replica as OrbitMatch
-    var is_flying: bool = _field.status == DodgeField.Status.RUNNING and replica.outcome == OrbitMatch.Outcome.PLAYING
+    var is_flying: bool = not paused and _field.status == DodgeField.Status.RUNNING and replica.outcome == OrbitMatch.Outcome.PLAYING
     var direction: Vector2 = _input.read_direction() if is_flying else Vector2.ZERO
     if is_flying:
         _field.step(delta, direction, replica.phase_held)
@@ -84,9 +92,30 @@ func _start_run(area: Vector2) -> void:
             FIELD_SEED + _runs,
             SOLAR_WIND,
             )
+    _apply_rocket_stats()
     _view.setup(_field)
     _hull_bar.setup(_field.hull)
     _phase_bar.setup(_field.phase)
+
+
+## Los 4 aspectos del cohete armado cambian el vuelo; las piezas base dejan una nave frágil y lenta.
+## Durabilidad → casco · Empuje → velocidad · Combustible → carga de fase · Estabilidad → menos viento solar.
+func _apply_rocket_stats() -> void:
+    var durability: float = float(_build.stat(RocketParts.Stat.DURABILITY))
+    var thrust: float = float(_build.stat(RocketParts.Stat.THRUST))
+    var fuel: float = float(_build.stat(RocketParts.Stat.FUEL))
+    var stability: float = float(_build.stat(RocketParts.Stat.STABILITY))
+    var hull_max: float = 35.0 + durability * 1.15
+    _field.hull = ResourceMeter.new(hull_max, hull_max)
+    _field.speed_scale = 0.72 + thrust * 0.0055
+    var phase_max: float = 40.0 + fuel * 1.4
+    _field.phase = ResourceMeter.new(phase_max, phase_max)
+    _field.wind = SOLAR_WIND * (1.35 - stability * 0.009)
+
+
+func _paint_ship(canvas: CanvasItem, center: Vector2, in_phase: bool, time: float) -> void:
+    var moving: float = 0.6 if _input == null else 0.3 + 0.7 * _input.read_direction().length()
+    RocketSprite.draw_sideways(canvas, _rocket, center, 0.4, time, moving, in_phase)
 
 
 func _send_thrust(direction: Vector2, delta: float) -> void:

@@ -82,12 +82,12 @@ func _draw_emission(w: int, usable: float, rng: RandomNumberGenerator) -> void:
             continue
         var x: float = _x_of(line.x)
         var noise: float = 1.0 if variant == 0 else rng.randf_range(0.84, 1.0)
-        var brightness: float = clampf(line.y * noise, 0.18, 1.0)
+        var brightness: float = clampf(line.y * noise, 0.55, 1.0)
         var color: Color = UiPalette.wavelength_color(line.x, brightness)
         var halo: Color = Color(color.r, color.g, color.b, 0.35)
-        draw_line(Vector2(x - 2, 0), Vector2(x - 2, usable), halo, 1.0)
-        draw_line(Vector2(x + 2, 0), Vector2(x + 2, usable), halo, 1.0)
-        draw_line(Vector2(x, 0), Vector2(x, usable), UiPalette.glow(color, 1.0 + brightness * 0.8), 3.0)
+        draw_line(Vector2(x - 4, 0), Vector2(x - 4, usable), halo, 2.0)
+        draw_line(Vector2(x + 4, 0), Vector2(x + 4, usable), halo, 2.0)
+        draw_line(Vector2(x, 0), Vector2(x, usable), UiPalette.glow(color, 1.0 + brightness * 0.8), 5.0)
 
 
 func _draw_signal(w: int, usable: float, rng: RandomNumberGenerator) -> void:
@@ -110,7 +110,7 @@ func _draw_signal(w: int, usable: float, rng: RandomNumberGenerator) -> void:
     if not points.is_empty():
         draw_multiline_colors(points, colors, 1.0)
     if outline.size() > 1:
-        draw_polyline(outline, Color(1.0, 1.0, 1.0), 1.2, true)
+        draw_polyline(outline, Color(1.0, 1.0, 1.0), 2.2, true)
 
 
 func _draw_marks(usable: float) -> void:
@@ -118,8 +118,8 @@ func _draw_marks(usable: float) -> void:
         if value < analyzer.axis_min or value > analyzer.axis_max:
             continue
         var x: float = _x_of(value)
-        draw_line(Vector2(x, usable - 7.0), Vector2(x, usable - 1.0), Color.WHITE, 1.0)
-        draw_line(Vector2(x, 0), Vector2(x, 4), Color(0.51, 0.51, 0.51), 1.0)
+        draw_line(Vector2(x, usable - 12.0), Vector2(x, usable - 1.0), Color.WHITE, 2.0)
+        draw_line(Vector2(x, 0), Vector2(x, 8), Color(0.8, 0.85, 0.95), 2.0)
 
 
 func _draw_ruler(usable: float) -> void:

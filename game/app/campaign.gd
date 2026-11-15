@@ -4,11 +4,16 @@ extends RefCounted
 
 
 ## Niveles en orden de juego (rutas de `SceneRoutes`).
+## Entre niveles van las cinemáticas (10 s, se pueden saltar).
 const SEQUENCE: Array[String] = [
     SceneRoutes.COLLECTION_STAGE,
+    SceneRoutes.CINE_TO_FOUNDRY,
     SceneRoutes.FOUNDRY_DUO_LEVEL,
+    SceneRoutes.CINE_TO_WORKSHOP,
     SceneRoutes.SHIP_BUILD_STAGE,
+    SceneRoutes.CINE_SPACE_HAZARDS,
     SceneRoutes.METEOR_MISSION,
+    SceneRoutes.CINE_ARRIVAL,
     SceneRoutes.ANALYSIS_LEVEL,
 ]
 

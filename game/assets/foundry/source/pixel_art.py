@@ -5,6 +5,7 @@ import math, random
 from PIL import Image
 
 OUT = "../"
+PREFIX = "mineral_"
 SIZE = 24
 
 
@@ -91,7 +92,7 @@ def mineral(name, cfg):
                 if 0 <= xx < SIZE and 0 <= yy < SIZE and inside[yy][xx]:
                     o[x, y] = oc
                     break
-    out.save(OUT + f"mineral_{name}.png")
+    out.save(OUT + f"{PREFIX}{name}.png")
 
 
 # Reloj de arena: tapas de madera, postes y vidrio. Interior del vidrio entre GLASS_TOP y GLASS_BOTTOM.
@@ -146,6 +147,7 @@ def hourglass():
     img.save(OUT + "hourglass.png")
 
 
-for key, cfg in MINERALS.items():
-    mineral(key, cfg)
-hourglass()
+if __name__ == "__main__":
+    for key, cfg in MINERALS.items():
+        mineral(key, cfg)
+    hourglass()

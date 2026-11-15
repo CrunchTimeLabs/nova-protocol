@@ -115,6 +115,12 @@ func wall_rects(origin: Vector2, cell_size: float, thickness: float) -> Array[Re
     return rects
 
 
+## Abre el muro del borde de `cell` en `dir` (una entrada o salida extra hacia fuera del laberinto).
+func open_border(cell: Vector2i, dir: int) -> void:
+    if contains(cell) and not contains(cell + (STEP[dir] as Vector2i)):
+        _clear(cell, dir)
+
+
 func _index(cell: Vector2i) -> int:
     return cell.y * cols + cell.x
 

@@ -19,6 +19,8 @@ const ROCK_CORE_SCALE: float = 0.6
 const LINE_WIDTH: float = 2.0
 const BLINK_SECONDS: float = 0.1
 
+## Opcional: dibuja la nave en lugar del triángulo. Firma: (canvas: CanvasItem, center: Vector2, in_phase: bool, time: float).
+var ship_painter: Callable
 var _field: DodgeField
 var _time: float = 0.0
 
@@ -60,6 +62,9 @@ func _draw_rock(rock: DodgeRock) -> void:
 
 
 func _draw_ship(center: Vector2) -> void:
+    if ship_painter.is_valid():
+        ship_painter.call(self, center, _field.in_phase, _time)
+        return
     var radius: float = DodgeField.SHIP_RADIUS
     var nose: Vector2 = center + Vector2(radius, 0.0)
     var top: Vector2 = center + Vector2(-radius, -radius * 0.8)

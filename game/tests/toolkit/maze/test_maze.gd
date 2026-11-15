@@ -14,3 +14,14 @@ func test_same_seed_same_walls() -> void:
     var first: Maze = Maze.generate(9, 7, GameRandom.new(5))
     var second: Maze = Maze.generate(9, 7, GameRandom.new(5))
     check_equal(first.wall_rects(Vector2.ZERO, 10.0, 2.0), second.wall_rects(Vector2.ZERO, 10.0, 2.0), "misma semilla, mismos muros")
+
+
+func test_open_border_only_opens_outer_walls() -> void:
+    var maze: Maze = Maze.generate(9, 7, GameRandom.new(3))
+    var bottom: Vector2i = Vector2i(4, 6)
+    maze.open_border(bottom, Maze.S)
+    check(not maze.has_wall(bottom, Maze.S), "se abre el muro del borde")
+    var inner: Vector2i = Vector2i(4, 3)
+    var had_wall: bool = maze.has_wall(inner, Maze.S)
+    maze.open_border(inner, Maze.S)
+    check_equal(maze.has_wall(inner, Maze.S), had_wall, "un muro interior no se toca")

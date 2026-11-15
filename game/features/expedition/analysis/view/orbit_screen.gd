@@ -180,22 +180,25 @@ func _draw_cards(mouse: Vector2) -> void:
         var left: int = expedition.ledger.analyses_left(planet.id, spec.id)
         var part: Vector2i = expedition.ledger.coverage(planet.id, spec.id)
         var hover: bool = _overlay == null and rect.has_point(mouse) and left > 0
+        var tone: Color = UiPalette.instrument_color(spec.id)
         var background: Color = UiPalette.PANEL
-        var border: Color = UiPalette.BORDER_DIM
-        var color: Color = UiPalette.TEXT
+        var border: Color = Color(tone, 0.55)
+        var color: Color = tone.lightened(0.35)
         if left == 0:
             background = Color(0.09, 0.09, 0.09)
             border = Color(0.3, 0.3, 0.3)
             color = Color(0.51, 0.51, 0.51)
         elif hover:
             background = UiPalette.PANEL_ALT
-            border = UiPalette.glow(UiPalette.SCIENCE, 1.4)
+            border = UiPalette.glow(tone, 1.4)
         UiPalette.card(self, rect, background, border)
+        if left > 0:
+            draw_rect(Rect2(rect.position, Vector2(6, rect.size.y)), tone)
         UiPalette.text(self, rect.position + Vector2(14, 8), spec.name, UiPalette.SUBTITLE, color, true)
         UiPalette.text(self, rect.position + Vector2(14, 32), "mide %s  —  %s" % [spec.category.to_upper(), spec.axis_label], UiPalette.TINY, UiPalette.GRAY)
         UiPalette.text(self, rect.position + Vector2(14, 50), "identificados %d/%d" % [part.x, part.y], UiPalette.TINY, UiPalette.OK if part.x > 0 else UiPalette.GRAY)
-        UiPalette.text(self, Vector2(rect.end.x - 130, rect.position.y + 12), "%d análisis" % left if left > 0 else "agotado", UiPalette.SMALL, UiPalette.SCIENCE if left > 0 else UiPalette.DANGER, true)
-        UiPalette.bar(self, Rect2(rect.end.x - 132, rect.position.y + 40, 118, 12), float(part.x) / float(maxi(1, part.y)), UiPalette.SCIENCE)
+        UiPalette.text(self, Vector2(rect.end.x - 130, rect.position.y + 12), "%d análisis" % left if left > 0 else "agotado", UiPalette.SMALL, tone if left > 0 else UiPalette.DANGER, true)
+        UiPalette.bar(self, Rect2(rect.end.x - 132, rect.position.y + 40, 118, 12), float(part.x) / float(maxi(1, part.y)), tone)
 
 
 func _draw_log() -> void:
