@@ -21,6 +21,7 @@ const LABS: Array = [
 	["Fundición", SceneRoutes.FOUNDRY_LAB],
 	["Maze", SceneRoutes.MAZE_LAB],
 	["Recolección", SceneRoutes.COLLECTION_LAB],
+	["Nave", SceneRoutes.SHIP_LAB],
 	["Countdown", SceneRoutes.COUNTDOWN_LAB],
 	["Precision", SceneRoutes.PRECISION_LAB],
 	["Wiring", SceneRoutes.WIRING_LAB],

@@ -1,0 +1,6 @@
+Fondo del hangar (launch_site.png, 256x160, se dibuja x4 con filtro nearest).
+Se genera con Blender 4 (Cycles) y se reduce a 64 colores:
+  blender -b -P launch_site.py -- /tmp/launch_raw.png
+  python3 -c "from PIL import Image; Image.open('/tmp/launch_raw.png').convert('RGB').quantize(colors=64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB').save('../launch_site.png')"
+Coordenadas: x_px = (X + 12.8) * 10, y_px = (16 - Z) * 10 (a 256x160). Plataforma: centro X 0.2, arriba Z 1.55.
+Las piezas (c1..m3, flame1..3) son copia de los x1_original de "assets para cohete".
