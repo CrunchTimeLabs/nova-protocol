@@ -9,12 +9,17 @@ const MAX_TRAIL_POINTS: int = 200
 const BODY_COLOR: Color = Color(1.0, 0.8, 0.4)
 const SHIP_COLOR: Color = Color(0.4, 0.8, 1.0)
 const TRAIL_COLOR: Color = Color(0.4, 0.8, 1.0, 0.4)
+const GOAL_COLOR: Color = Color(0.4, 1.0, 0.5, 0.8)
+const GOAL_WIDTH: float = 2.0
+const GOAL_SEGMENTS: int = 64
 const FORECAST_COLOR: Color = Color(1.0, 1.0, 1.0, 0.5)
 
 var _body: DynamicBody
 var _attractors: Array[CentralGravity] = []
 var _trail: PackedVector2Array = PackedVector2Array()
 var _forecast: PackedVector2Array = PackedVector2Array()
+var _goal_center: Vector2 = Vector2.ZERO
+var _goal_radius: float = 0.0
 
 
 func setup(body: DynamicBody, attractors: Array[CentralGravity]) -> void:
@@ -25,6 +30,12 @@ func setup(body: DynamicBody, attractors: Array[CentralGravity]) -> void:
 ## La trayectoria prevista (puntos en mundo normalizado); se dibuja tal cual hasta que llegue otra.
 func set_forecast(points: PackedVector2Array) -> void:
     _forecast = points
+
+
+## Marca una zona (centro y radio en mundo normalizado) como un círculo de meta; radio 0 la quita.
+func set_goal(center: Vector2, radius: float) -> void:
+    _goal_center = center
+    _goal_radius = radius
 
 
 func clear_trail() -> void:
@@ -47,6 +58,8 @@ func _draw() -> void:
     var origin: Vector2 = Vector2((get_viewport_rect().size.x - side) / 2.0, 0.0)
     for attractor: CentralGravity in _attractors:
         draw_circle(origin + attractor.center * side, sqrt(attractor.gm) * BODY_RADIUS_PER_ROOT_GM, BODY_COLOR)
+    if _goal_radius > 0.0:
+        draw_arc(origin + _goal_center * side, _goal_radius * side, 0.0, TAU, GOAL_SEGMENTS, GOAL_COLOR, GOAL_WIDTH)
     if _forecast.size() > 1:
         draw_polyline(_to_screen(_forecast, origin, side), FORECAST_COLOR)
     if _trail.size() > 1:

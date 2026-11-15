@@ -2,12 +2,12 @@ class_name MeteorPilotPanel
 extends Node
 ## Lado del piloto en el nivel Meteoritos: un `DodgeField` del tamaño real de su recuadro, que maneja con las flechas.
 ## Sus flechas también se traducen a empuje y se envían al anfitrión como en `PilotPanel`. El vuelo (casco, resultado)
-## es local de este lado y no afecta a la estación. Enter reinicia al terminar. La estación (tecla F) decide cuándo entra la nave en fase. Aviso de viento solar, fase, casco y tiempo se ofrecen al HUD con `hud_item()`.
+## es local de este lado; si se destruye, avisa al anfitrión (`REPORT_CRASH`). El nivel (`MeteorMission`) recarga con Enter al haber resultado. La estación (tecla F) decide cuándo entra la nave en fase. Aviso de viento solar, fase, casco y tiempo se ofrecen al HUD con `hud_item()`.
 
 
-## Como el primer planeta del original: densidad 1.0 y 68 s de tramo.
+## Densidad como el primer planeta del original; sin tiempo límite (0): se gana desde la estación.
 const METEOR_DENSITY: float = 1.0
-const METEOR_SECONDS: float = 68.0
+const NO_TIME_LIMIT: float = 0.0
 ## Viento solar (ondas expansivas); como el original, 0.5.
 const SOLAR_WIND: float = 0.5
 const FIELD_SEED: int = 7301
@@ -31,7 +31,7 @@ var _time_label: Label = Label.new()
 var _wind_label: Label = Label.new()
 var _wind_lamp: StatusLamp = StatusLamp.new()
 var _backdrop: ShaderBackdrop = ShaderBackdrop.new()
-var _was_enter_pressed: bool = false
+var _has_reported_crash: bool = false
 
 
 func setup(client: MatchClient, input: InputSource) -> void:
@@ -65,12 +65,13 @@ func _physics_process(delta: float) -> void:
         return
     if _field == null or _field.field_size != area:
         _start_run(area)
-    var is_flying: bool = _field.status == DodgeField.Status.RUNNING
+    var replica: OrbitMatch = _client.replica as OrbitMatch
+    var is_flying: bool = _field.status == DodgeField.Status.RUNNING and replica.outcome == OrbitMatch.Outcome.PLAYING
     var direction: Vector2 = _input.read_direction() if is_flying else Vector2.ZERO
-    var wants_phase: bool = is_flying and (_client.replica as OrbitMatch).phase_held
-    _field.step(delta, direction, wants_phase)
+    if is_flying:
+        _field.step(delta, direction, replica.phase_held)
     _send_thrust(direction, delta)
-    _restart_on_enter(area)
+    _report_crash()
     _refresh(area)
 
 
@@ -79,7 +80,7 @@ func _start_run(area: Vector2) -> void:
     _field = DodgeField.new(
             area,
             METEOR_DENSITY,
-            METEOR_SECONDS,
+            NO_TIME_LIMIT,
             FIELD_SEED + _runs,
             SOLAR_WIND,
             )
@@ -95,23 +96,28 @@ func _send_thrust(direction: Vector2, delta: float) -> void:
         _client.send_command(OrbitCommand.Kind.SET_THRUST, payload)
 
 
-func _restart_on_enter(area: Vector2) -> void:
-    var is_pressed: bool = Input.is_physical_key_pressed(KEY_ENTER)
-    if is_pressed and not _was_enter_pressed and _field.status != DodgeField.Status.RUNNING:
-        _start_run(area)
-    _was_enter_pressed = is_pressed
+## Al quedarse sin casco avisa al anfitrión una vez; él decide la derrota de la partida.
+func _report_crash() -> void:
+    if _field.status != DodgeField.Status.DESTROYED or _has_reported_crash:
+        return
+    _has_reported_crash = _client.send_command(OrbitCommand.Kind.REPORT_CRASH, {}, true)
 
 
 func _refresh(area: Vector2) -> void:
     _view.size = area
     _backdrop.size = area
     _wind_lamp.set_ok(not _field.wave_warning)
-    _time_label.text = "Tiempo: %d s" % ceili(maxf(_field.duration - _field.elapsed, 0.0))
-    match _field.status:
-        DodgeField.Status.ARRIVED:
-            _message.text = "METEORITOS ESQUIVADOS\nEnter: reintentar"
-        DodgeField.Status.DESTROYED:
-            _message.text = "NAVE DESTRUIDA\nEnter: reintentar"
-        DodgeField.Status.RUNNING:
-            _message.text = ""
+    _time_label.text = "Tiempo: %d s" % int(_field.elapsed)
+    _message.text = _result_text()
     _message.position = (area - _message.size) * 0.5 + MESSAGE_OFFSET
+
+
+func _result_text() -> String:
+    var replica: OrbitMatch = _client.replica as OrbitMatch
+    if replica.outcome == OrbitMatch.Outcome.WON:
+        return "LA ESTACIÓN LLEGÓ A LA LUNA\nEnter: reintentar"
+    if _field.status == DodgeField.Status.DESTROYED:
+        return "NAVE DESTRUIDA\nEnter: reintentar"
+    if replica.outcome == OrbitMatch.Outcome.LOST:
+        return "NAVE PERDIDA EN EL ESPACIO\nEnter: reintentar"
+    return ""

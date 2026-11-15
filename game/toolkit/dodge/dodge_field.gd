@@ -1,7 +1,8 @@
 class_name DodgeField
 extends RefCounted
 ## Campo de esquivar: una nave se mueve dentro de un recuadro de tamaño dado y cruzan rocas de derecha a izquierda.
-## Cada golpe resta casco y da unos segundos de invulnerabilidad. Termina al llegar a `duration` o al quedarse sin casco.
+## Cada golpe resta casco y da unos segundos de invulnerabilidad. Termina al llegar a `duration` (si es > 0) o al quedarse sin casco;
+## con `duration` <= 0 no hay final por tiempo y la dificultad sube durante `RAMP_SECONDS` y se queda en el máximo.
 ## Todo el azar usa la semilla; el tamaño del campo es un parámetro (rocas, velocidades y nave se escalan con él).
 ## Con `wants_phase` la nave hace un salto de fase: intangible y más rápida mientras dura su carga, que se recarga despacio.
 ## Con `wind` > 0 también nacen ondas expansivas (viento solar) que golpean una vez al alcanzar la nave.
@@ -20,6 +21,8 @@ const INVULNERABILITY_SECONDS: float = 1.15
 const FIRST_ROCK_SECONDS: float = 1.0
 ## Dificultad (del original): a medida que avanza el progreso (0..1) las rocas caen más seguido y más rápido.
 ## Segundos entre rocas = (INTERVAL_START - INTERVAL_DROP * progreso^INTERVAL_CURVE) / densidad.
+## Segundos que tarda la dificultad en llegar al máximo cuando no hay duración.
+const RAMP_SECONDS: float = 68.0
 const INTERVAL_START: float = 0.92
 const INTERVAL_DROP: float = 0.62
 const INTERVAL_CURVE: float = 1.1
@@ -42,10 +45,10 @@ const SPEED_DENSITY_GAIN: float = 0.3
 const ROCK_DRIFT_HEIGHTS: float = 0.079
 const ROCK_MARGIN_HEIGHTS: float = 0.05
 
-## Fase (del original: carga 120, consumo 34/s, velocidad x1.8) con recarga lenta cuando no se usa.
+## Fase (carga 120 y velocidad x1.8 como el original; consumo y recarga ajustados para que sea escasa) cuando no se usa.
 const PHASE_MAX: float = 120.0
-const PHASE_DRAIN: float = 34.0
-const PHASE_RECHARGE: float = 6.0
+const PHASE_DRAIN: float = 50.0
+const PHASE_RECHARGE: float = 3.0
 const PHASE_SPEED_BOOST: float = 1.8
 ## Ondas (viento solar): daño, invulnerabilidad, intervalo (a mayor `wind`, más seguido) y velocidad en anchos por segundo.
 const WAVE_DAMAGE: float = 15.0
@@ -138,7 +141,7 @@ func step(delta: float, move: Vector2, wants_phase: bool = false) -> Status:
     elapsed += delta
     if hull.current <= 0.0:
         status = Status.DESTROYED
-    elif elapsed >= duration:
+    elif duration > 0.0 and elapsed >= duration:
         status = Status.ARRIVED
     return status
 
@@ -149,11 +152,16 @@ func _update_phase(delta: float, wants_phase: bool) -> void:
 
 
 func progress() -> float:
-    return clampf(elapsed / duration, 0.0, 1.0) if duration > 0.0 else 1.0
+    var span: float = duration if duration > 0.0 else RAMP_SECONDS
+    return clampf(elapsed / span, 0.0, 1.0)
+
+
+func _is_near_end(cutoff: float) -> bool:
+    return duration > 0.0 and elapsed >= duration - cutoff
 
 
 func _spawn() -> void:
-    if elapsed < _next_rock or elapsed >= duration - ROCK_CUTOFF_SECONDS:
+    if elapsed < _next_rock or _is_near_end(ROCK_CUTOFF_SECONDS):
         return
     var p: float = progress()
     _next_rock = elapsed + (INTERVAL_START - INTERVAL_DROP * pow(p, INTERVAL_CURVE)) / density
@@ -193,7 +201,7 @@ func _update_rocks(delta: float) -> void:
 
 
 func _spawn_wave() -> void:
-    if wind <= 0.0 or elapsed < _next_wave or elapsed >= duration - WAVE_CUTOFF_SECONDS:
+    if wind <= 0.0 or elapsed < _next_wave or _is_near_end(WAVE_CUTOFF_SECONDS):
         return
     var interval: float = _random.range_float(WAVE_INTERVAL_MIN_SECONDS, WAVE_INTERVAL_MAX_SECONDS)
     _next_wave = elapsed + interval / maxf(WAVE_MIN_WIND, wind)

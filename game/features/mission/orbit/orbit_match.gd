@@ -3,6 +3,7 @@ extends MatchRules
 ## Reglas de la misión de órbita: un cuerpo con motor y combustible bajo la gravedad de una estrella y una luna.
 ## El piloto manda su aceleración (la de su laboratorio de movimiento), relativa al rumbo de la nave (adelante, atrás, derecha, izquierda);
 ## aquí se escala y se limita para convertirla en empuje, que se suma a la gravedad.
+## La partida se gana al cruzar el radio de meta alrededor de la luna y se pierde al agotarse el combustible, al salir del mapa o al avisar el piloto de que se destruyó.
 ## Sin nodos: la estación lee `body` y `attractors()`.
 
 
@@ -22,8 +23,16 @@ const MAX_THRUST_LENGTH: float = 1.0
 const KEY_ORBIT: String = "orbit"
 const KEY_FUEL: String = "fuel"
 const KEY_PHASE: String = "phase"
+const KEY_OUTCOME: String = "outcome"
+## Radio (en el mapa normalizado) alrededor de la luna que la nave debe cruzar para ganar.
+const MOON_GOAL_RADIUS: float = 0.07
+## La nave pierde si sale del mapa normalizado [0, 1] por más que este margen: ya no hay órbita que recuperar.
+const ESCAPE_MARGIN: float = 0.0
+
+enum Outcome { PLAYING, WON, LOST }
 
 var body: DynamicBody
+var outcome: Outcome = Outcome.PLAYING
 ## Hay alguna estación manteniendo el salto de fase (el piloto lo lee de su réplica).
 var phase_held: bool = false
 
@@ -56,6 +65,18 @@ func attractors() -> Array[CentralGravity]:
     return _attractors
 
 
+func distance_to_moon() -> float:
+    return body.position.distance_to(MOON_CENTER)
+
+
+## La nave salió del mapa.
+func is_lost_in_space() -> bool:
+    var position: Vector2 = body.position
+    var low: float = -ESCAPE_MARGIN
+    var high: float = 1.0 + ESCAPE_MARGIN
+    return position.x < low or position.x > high or position.y < low or position.y > high
+
+
 func fuel_ratio() -> float:
     return _fuel.ratio()
 
@@ -65,6 +86,10 @@ func fuel_ratio() -> float:
 func apply(slot: int, command: Command) -> bool:
     if command.kind == OrbitCommand.Kind.PHASE_HOLD:
         return _apply_phase_hold(slot, command)
+    if command.kind == OrbitCommand.Kind.REPORT_CRASH:
+        if outcome == Outcome.PLAYING:
+            outcome = Outcome.LOST
+        return true
     if command.kind != OrbitCommand.Kind.SET_THRUST:
         return false
     var raw_x: Variant = command.payload.get("x")
@@ -88,11 +113,22 @@ func _apply_phase_hold(slot: int, command: Command) -> bool:
 
 
 func step(delta: float) -> void:
+    if outcome != Outcome.PLAYING:
+        return
     var total: Vector2 = Vector2.ZERO
     for thrust: Variant in _thrusts.values():
         total += thrust as Vector2
     _manual.set_command(total)
     body.step(delta * _time_scale)
+    _check_outcome()
+
+
+## La meta se comprueba antes que el combustible: si llega con el último gramo, gana.
+func _check_outcome() -> void:
+    if distance_to_moon() < MOON_GOAL_RADIUS:
+        outcome = Outcome.WON
+    elif is_lost_in_space() or _fuel.current <= 0.0:
+        outcome = Outcome.LOST
 
 
 func release_slot(slot: int) -> void:
@@ -105,7 +141,7 @@ func snapshot() -> Dictionary:
     var saved: Dictionary = body.snapshot()
     var fuel: float = float(saved["fuel"])
     saved.erase("fuel")
-    return {KEY_ORBIT: saved, KEY_FUEL: fuel, KEY_PHASE: phase_held}
+    return {KEY_ORBIT: saved, KEY_FUEL: fuel, KEY_PHASE: phase_held, KEY_OUTCOME: Outcome.find_key(outcome)}
 
 
 ## Acepta instantáneas parciales: un jugador solo recibe las claves de su rol.
@@ -116,3 +152,5 @@ func restore(saved: Dictionary) -> void:
         _fuel.set_value(float(saved[KEY_FUEL]))
     if saved.has(KEY_PHASE):
         phase_held = bool(saved[KEY_PHASE])
+    if saved.has(KEY_OUTCOME):
+        outcome = Outcome[str(saved[KEY_OUTCOME])] as Outcome

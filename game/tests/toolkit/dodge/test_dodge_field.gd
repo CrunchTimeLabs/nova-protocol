@@ -193,3 +193,16 @@ func test_a_wave_band_has_thickness() -> void:
     var outside: Vector2 = Vector2(100.0 + DodgeWave.THICKNESS * 0.5 + 1.0, 0.0)
     check(wave.reaches(inside, 0.0), "dentro de la banda la alcanza")
     check(not wave.reaches(outside, 0.0), "fuera de la banda no")
+
+
+func test_without_duration_the_run_never_arrives_and_difficulty_plateaus() -> void:
+    var field: DodgeField = DodgeField.new(SIZE, 1.0, 0.0, 3, 1.0)
+    field.hull = ResourceMeter.new(1.0e9, 1.0e9)
+    var late_rocks: int = 0
+    for frame: int in range(int((DodgeField.RAMP_SECONDS + 60.0) / FRAME)):
+        check_equal(field.step(FRAME, Vector2.ZERO), DodgeField.Status.RUNNING, "sin duración no llega (fotograma %d)" % frame) if frame % 600 == 0 else field.step(FRAME, Vector2.ZERO)
+    check_equal(field.progress(), 1.0, "la dificultad se queda en el máximo")
+    check(field.spawned > 0 and field.waves_spawned > 0, "pasada la rampa siguen cayendo rocas y ondas")
+    var doomed: DodgeField = DodgeField.new(SIZE, 0.5, 0.0, 1)
+    doomed.hull.set_value(0.0)
+    check_equal(doomed.step(FRAME, Vector2.ZERO), DodgeField.Status.DESTROYED, "sin casco sigue siendo destruida")

@@ -27,3 +27,11 @@ func test_only_the_station_holds_phase_and_the_pilot_sees_it() -> void:
     check(not table.can_send(OrbitRole.Role.PILOT, OrbitCommand.Kind.PHASE_HOLD), "el piloto no")
     var seen: Dictionary = table.filter(OrbitRole.Role.PILOT, {OrbitMatch.KEY_PHASE: true, OrbitMatch.KEY_ORBIT: {}})
     check(seen.has(OrbitMatch.KEY_PHASE) and not seen.has(OrbitMatch.KEY_ORBIT), "el piloto recibe la fase y no la órbita")
+
+
+func test_only_the_pilot_reports_a_crash_and_everyone_sees_the_outcome() -> void:
+    var table: RoleTable = OrbitMission.roles()
+    check(table.can_send(OrbitRole.Role.PILOT, OrbitCommand.Kind.REPORT_CRASH), "el piloto avisa del choque")
+    check(not table.can_send(OrbitRole.Role.STATION, OrbitCommand.Kind.REPORT_CRASH), "la estación no")
+    for role: int in OrbitRole.Role.values():
+        check(table.filter(role, {OrbitMatch.KEY_OUTCOME: "WON"}).has(OrbitMatch.KEY_OUTCOME), "el rol %d ve el resultado" % role)

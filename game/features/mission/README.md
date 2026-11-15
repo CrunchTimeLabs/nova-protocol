@@ -9,6 +9,7 @@ Misiones cooperativas para jugar en pantalla dividida (o LAN): Órbita (piloto +
 - DADO una sesión CUANDO se completa el objetivo ENTONCES la misión termina (`MissionSession`).
 - DADO la estación CUANDO mantiene F en el nivel Meteoritos ENTONCES `OrbitMatch` publica `phase_held` y la nave del piloto hace el salto de fase (`OrbitCommand.PHASE_HOLD`).
 
+- DADO la nave de la estación CUANDO cruza `OrbitMatch.MOON_GOAL_RADIUS` alrededor de la luna ENTONCES se gana; si el casco del piloto (`REPORT_CRASH`) o el combustible llegan a cero antes, o la nave sale del mapa [0, 1] (`ESCAPE_MARGIN`), se pierde; resuelto, la simulación se congela y ambos lados ven `outcome`.
 ## Qué reutilizar
 - `MissionSession`, `SessionOptions`, `OrbitMatch`, `CircuitMatch`, `SplitScreen`, `MissionLobby`.
 

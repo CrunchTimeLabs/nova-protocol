@@ -91,3 +91,64 @@ func test_phase_hold_is_validated_and_published() -> void:
     _match.apply(0, Command.new(0, OrbitCommand.Kind.PHASE_HOLD, {"on": true}))
     _match.release_slot(0)
     check(not _match.phase_held, "si la estación se va, se suelta")
+
+
+func _place_ship(game: OrbitMatch, position: Vector2) -> void:
+    var saved: Dictionary = game.body.snapshot()
+    saved["x"] = position.x
+    saved["y"] = position.y
+    saved["vx"] = 0.0
+    saved["vy"] = 0.0
+    game.body.restore(saved)
+
+
+func test_reaching_the_moon_goal_wins_and_freezes_the_match() -> void:
+    var far: OrbitMatch = OrbitMatch.new()
+    far.step(1.0 / 60.0)
+    check_equal(far.outcome, OrbitMatch.Outcome.PLAYING, "lejos de la meta se sigue jugando")
+    var near: OrbitMatch = OrbitMatch.new()
+    _place_ship(near, OrbitMatch.MOON_CENTER + Vector2(OrbitMatch.MOON_GOAL_RADIUS * 0.5, 0.0))
+    near.step(1.0 / 60.0)
+    check_equal(near.outcome, OrbitMatch.Outcome.WON, "dentro del radio de meta se gana")
+    var frozen: Dictionary = near.snapshot()
+    near.step(1.0)
+    check_equal(near.snapshot(), frozen, "resuelto, la simulación ya no cambia")
+
+
+func test_a_reported_crash_loses_and_the_first_result_stays() -> void:
+    check(_match.apply(1, Command.new(1, OrbitCommand.Kind.REPORT_CRASH, {})), "se acepta el aviso")
+    check_equal(_match.outcome, OrbitMatch.Outcome.LOST, "se pierde")
+    _place_ship(_match, OrbitMatch.MOON_CENTER)
+    _match.step(1.0 / 60.0)
+    check_equal(_match.outcome, OrbitMatch.Outcome.LOST, "un resultado ya dado no se pisa")
+
+
+func test_running_out_of_fuel_loses_unless_the_goal_is_reached_first() -> void:
+    var dry: OrbitMatch = OrbitMatch.new()
+    dry.restore({OrbitMatch.KEY_FUEL: 0.0})
+    dry.step(1.0 / 60.0)
+    check_equal(dry.outcome, OrbitMatch.Outcome.LOST, "sin combustible fuera de la meta se pierde")
+    var lucky: OrbitMatch = OrbitMatch.new()
+    lucky.restore({OrbitMatch.KEY_FUEL: 0.0})
+    _place_ship(lucky, OrbitMatch.MOON_CENTER)
+    lucky.step(1.0 / 60.0)
+    check_equal(lucky.outcome, OrbitMatch.Outcome.WON, "si llega a la meta en el mismo paso, gana")
+
+
+func test_outcome_travels_by_name_through_json() -> void:
+    _match.apply(1, Command.new(1, OrbitCommand.Kind.REPORT_CRASH, {}))
+    var replica: OrbitMatch = OrbitMatch.new()
+    replica.restore(JSON.parse_string(JSON.stringify(_match.snapshot())) as Dictionary)
+    check_equal(replica.outcome, OrbitMatch.Outcome.LOST, "la réplica recibe el resultado")
+
+
+func test_leaving_the_map_loses() -> void:
+    for escape: Vector2 in [Vector2(-0.01, 0.5), Vector2(1.01, 0.5), Vector2(0.5, -0.01), Vector2(0.5, 1.01)]:
+        var game: OrbitMatch = OrbitMatch.new()
+        _place_ship(game, escape)
+        game.step(1.0 / 60.0)
+        check_equal(game.outcome, OrbitMatch.Outcome.LOST, "salir del mapa por %s pierde" % str(escape))
+    var inside: OrbitMatch = OrbitMatch.new()
+    _place_ship(inside, Vector2(0.99, 0.5))
+    inside.step(1.0 / 60.0)
+    check_equal(inside.outcome, OrbitMatch.Outcome.PLAYING, "dentro del mapa se sigue jugando")

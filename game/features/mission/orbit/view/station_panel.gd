@@ -14,6 +14,7 @@ var _hud: Label = Label.new()
 var _client: MatchClient
 var _replica: OrbitMatch
 var _has_phase_key: bool = false
+var _has_goal: bool = false
 var _was_f_pressed: bool = false
 var _has_forecast: bool = false
 var _was_space_pressed: bool = false
@@ -33,6 +34,12 @@ func setup(client: MatchClient) -> void:
 ## Activa F: mantenerla hace que la nave del piloto haga el salto de fase. Solo lo pide el nivel que lo usa.
 func enable_phase_key() -> void:
     _has_phase_key = true
+
+
+## Muestra la meta (círculo alrededor de la luna) y la distancia a ella. Solo lo pide el nivel que la usa.
+func enable_goal() -> void:
+    _has_goal = true
+    _view.set_goal(OrbitMatch.MOON_CENTER, OrbitMatch.MOON_GOAL_RADIUS)
 
 
 ## Espacio (una vez por pulsación) recalcula la trayectoria. Se lee el teclado directamente: no depende del foco del recuadro.
@@ -60,6 +67,8 @@ func _on_snapshot(_tick: int) -> void:
     var hint: String = "Espacio: recalcular trayectoria · Indicaciones al piloto de viva voz"
     if _has_phase_key:
         hint += "\nF (mantener): salto de fase de la nave"
+    if _has_goal:
+        hint += "\nDistancia a la luna: %.3f (meta: menos de %.2f)" % [_replica.distance_to_moon(), OrbitMatch.MOON_GOAL_RADIUS]
     _hud.text = "Velocidad: %.3f\n%s" % [_replica.body.velocity.length(), hint]
 
 
