@@ -1,0 +1,9 @@
+Arte de la fundición (pixel art, se dibuja x4 con filtro nearest).
+
+Fondo (foundry_hall.png, 256x160): Blender 4 (Cycles), render a 512x320, se reduce y se cuantiza a 64 colores:
+  blender -b -P foundry_hall.py -- /tmp/foundry_raw.png
+  python3 -c "from PIL import Image; Image.open('/tmp/foundry_raw.png').convert('RGB').resize((256,160), Image.BOX).quantize(colors=64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert('RGB').save('../foundry_hall.png')"
+
+Minerales (mineral_gold/copper/iron.png, 24x24) y reloj de arena (hourglass.png, 28x48):
+  python3 pixel_art.py
+La arena la dibuja el juego (HourglassDraw) con la misma forma del vidrio: si cambias GLASS_* aquí, cámbialo allí.
