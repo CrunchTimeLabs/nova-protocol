@@ -63,3 +63,15 @@ func test_partial_snapshot_restores_only_what_it_carries() -> void:
     check_equal((replica.snapshot()[OrbitMatch.KEY_ORBIT] as Dictionary)["x"], OrbitMatch.STAR_CENTER.x + OrbitMatch.ORBIT_RADIUS, "la órbita no se tocó")
     replica.restore({OrbitMatch.KEY_ORBIT: _match.snapshot()[OrbitMatch.KEY_ORBIT]})
     check_equal(replica.snapshot()[OrbitMatch.KEY_ORBIT], _match.snapshot()[OrbitMatch.KEY_ORBIT], "solo órbita")
+
+
+func test_time_scale_slows_the_whole_orbit() -> void:
+    var normal: OrbitMatch = OrbitMatch.new()
+    var slow: OrbitMatch = OrbitMatch.new(0.25)
+    for _i: int in range(120):
+        normal.step(1.0 / 60.0)
+        slow.step(1.0 / 60.0)
+    var start: Vector2 = OrbitMatch.new().body.position
+    var moved_normal: float = normal.body.position.distance_to(start)
+    var moved_slow: float = slow.body.position.distance_to(start)
+    check(moved_slow > 0.0 and moved_slow < moved_normal * 0.5, "con un cuarto de ritmo recorre mucho menos")

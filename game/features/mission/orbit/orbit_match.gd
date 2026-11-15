@@ -28,9 +28,13 @@ var _manual: ManualThrustController = ManualThrustController.new()
 var _fuel: ResourceMeter = ResourceMeter.new(FUEL_CAPACITY, FUEL_CAPACITY)
 var _attractors: Array[CentralGravity] = []
 var _thrusts: Dictionary = {}    # int (slot) -> Vector2
+var _time_scale: float
 
 
-func _init() -> void:
+## `time_scale` (> 0) acelera o frena toda la simulación (movimiento, gravedad, empuje y gasto) sin cambiar la órbita: 1.0 es el ritmo normal.
+func _init(time_scale: float = 1.0) -> void:
+    assert(time_scale > 0.0, "OrbitMatch necesita una escala de tiempo positiva")
+    _time_scale = time_scale
     var engine: ThrustEngine = ThrustEngine.new(MAX_ACCELERATION, _fuel, FUEL_CAPACITY / FULL_BURN_SECONDS)
     _attractors = [CentralGravity.new(STAR_CENTER, STAR_GM), CentralGravity.new(MOON_CENTER, MOON_GM)]
     var sources: Array[AccelerationSource] = []
@@ -72,7 +76,7 @@ func step(delta: float) -> void:
     for thrust: Variant in _thrusts.values():
         total += thrust as Vector2
     _manual.set_command(total)
-    body.step(delta)
+    body.step(delta * _time_scale)
 
 
 func release_slot(slot: int) -> void:
