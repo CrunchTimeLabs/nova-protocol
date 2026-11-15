@@ -53,6 +53,16 @@ func code() -> String:
     return "_".join(codes)
 
 
+## Aspecto del cohete armado de 0 a 100 (100 = la mejor pieza en cada sección); las secciones vacías no suman.
+func stat(which: RocketParts.Stat) -> int:
+    var total: int = 0
+    for section: RocketParts.Section in RocketParts.sections():
+        var part: int = part_at(section)
+        if part != -1:
+            total += RocketParts.stat_of(part as RocketParts.Part, which)
+    return roundi(100.0 * float(total) / float(RocketParts.stat_max(which)))
+
+
 ## Todas las combinaciones posibles: una pieza por sección.
 static func all_combinations() -> Array[Array]:
     var combos: Array[Array] = [[]]

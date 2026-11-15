@@ -89,6 +89,8 @@ var wave_warning: bool:
 var ship: Vector2:
     get:
         return _body.position
+## Multiplica la velocidad de la nave (1 = la del original); quien compone la ajusta (por ejemplo, el empuje del cohete).
+var speed_scale: float = 1.0
 
 var _random: GameRandom
 var _controller: ManualController = ManualController.new()
@@ -129,7 +131,7 @@ func step(delta: float, move: Vector2, wants_phase: bool = false) -> Status:
     if status != Status.RUNNING or delta <= 0.0:
         return status
     _update_phase(delta, wants_phase)
-    _body.profile.max_speed = maxf(_ship_speed * (PHASE_SPEED_BOOST if in_phase else 1.0), MovementProfile.MIN_SPEED)
+    _body.profile.max_speed = maxf(_ship_speed * speed_scale * (PHASE_SPEED_BOOST if in_phase else 1.0), MovementProfile.MIN_SPEED)
     _controller.set_direction(move)
     _body.step(delta)
     _body.confine(_ship_area)

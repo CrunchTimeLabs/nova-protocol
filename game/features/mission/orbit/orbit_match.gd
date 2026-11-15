@@ -9,6 +9,10 @@ extends MatchRules
 
 const STAR_CENTER: Vector2 = Vector2(0.5, 0.5)
 const STAR_GM: float = 0.01
+## Suavizado de la gravedad del sol (mundo normalizado, ~su radio dibujado): al cruzar su centro la fuerza se apaga
+## de forma suave en vez de dispararse (antes, con 0.001, la nave salía despedida: la «divergencia»).
+const STAR_SOFTENING: float = 0.035
+const MOON_SOFTENING: float = 0.012
 const MOON_CENTER: Vector2 = Vector2(0.85, 0.3)
 const MOON_GM: float = 0.0008
 const ORBIT_RADIUS: float = 0.25
@@ -49,7 +53,7 @@ func _init(time_scale: float = 1.0) -> void:
     assert(time_scale > 0.0, "OrbitMatch necesita una escala de tiempo positiva")
     _time_scale = time_scale
     var engine: ThrustEngine = ThrustEngine.new(MAX_ACCELERATION, _fuel, FUEL_CAPACITY / FULL_BURN_SECONDS)
-    _attractors = [CentralGravity.new(STAR_CENTER, STAR_GM), CentralGravity.new(MOON_CENTER, MOON_GM)]
+    _attractors = [CentralGravity.new(STAR_CENTER, STAR_GM, STAR_SOFTENING), CentralGravity.new(MOON_CENTER, MOON_GM, MOON_SOFTENING)]
     var sources: Array[AccelerationSource] = []
     sources.assign(_attractors)
     body = DynamicBody.new(

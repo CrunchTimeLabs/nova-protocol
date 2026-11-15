@@ -25,6 +25,8 @@ const RETURN_TIME := 0.25
 const SHAKE := 6.0
 const PANEL_FADE := 2.5
 
+## Piezas que se pueden usar (vacío = todas, como en el lab). La campaña pasa las base + las desbloqueadas.
+var available_parts: Array[int] = []
 var _session: HangarSession = HangarSession.new()
 var _drag: DragSession
 var _sfx: ShipSfx
@@ -109,7 +111,10 @@ func _press(point: Vector2) -> void:
         return
     var part: int = PartsPalette.part_at(point)
     if part != -1:
-        _start_drag(part, ZONE_PALETTE)
+        if PartsPalette.is_available(part, available_parts):
+            _start_drag(part, ZONE_PALETTE)
+        else:
+            _sfx.play(ShipSfx.Sound.DENIED, -6.0)
         return
     for section: RocketParts.Section in RocketParts.sections():
         var placed: int = _session.build.part_at(section)
@@ -208,9 +213,10 @@ func _draw() -> void:
     ShipStage.draw_hud(self, _session, _panels, _time, _mouse)
     if _panels > 0.01:
         draw_set_transform(Vector2((1.0 - _panels) * -40.0, 0.0), 0.0, Vector2.ONE)
-        PartsPalette.draw(self, _session.build, PartsPalette.part_at(_mouse) if _drag_part == -1 else -1, _drag_part)
+        PartsPalette.draw(self, _session.build, PartsPalette.part_at(_mouse) if _drag_part == -1 else -1, _drag_part, available_parts)
         draw_set_transform(Vector2((1.0 - _panels) * 40.0, 0.0), 0.0, Vector2.ONE)
         HangarPanel.draw(self, _session.build, _time, HangarPanel.BUTTON.has_point(_mouse))
+        StatsPanel.draw(self, _session.build, _preview_part(), _time)
         draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
     _draw_dragged()
 
@@ -230,6 +236,22 @@ func _draw_dragged() -> void:
     var texture: Texture2D = RocketView.part_texture(part as RocketParts.Part)
     var size: Vector2 = Vector2(texture.get_width(), texture.get_height()) * ROCKET_SCALE
     draw_texture_rect(texture, Rect2(where - size / 2.0, size), false, Color(1, 1, 1, alpha))
+
+
+## Pieza cuya comparación se enseña en los aspectos: la que se arrastra o la tarjeta bajo el ratón.
+func _preview_part() -> int:
+    if _drag_part != -1:
+        return _drag_part
+    var part: int = PartsPalette.part_at(_mouse)
+    return part if part != -1 and PartsPalette.is_available(part, available_parts) else -1
+
+
+## Pieza en cada sección del cohete armado (para llevarlo al siguiente nivel).
+func rocket_parts() -> Dictionary:
+    var parts: Dictionary = {}
+    for section: RocketParts.Section in RocketParts.sections():
+        parts[section] = _session.build.part_at(section)
+    return parts
 
 
 ## Sección que se resalta: la de la pieza arrastrada si está cerca del cohete.

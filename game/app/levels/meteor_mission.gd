@@ -18,6 +18,8 @@ var _hud: SplitHud = SplitHud.new()
 var _speed: Label = Label.new()
 var _outcome: Label = Label.new()
 var _was_enter_pressed: bool = false
+var _intro: MeteorIntro
+var _pilot: MeteorPilotPanel
 
 
 func _ready() -> void:
@@ -34,6 +36,28 @@ func _ready() -> void:
     mode.text = _mode_text()
     _hud.add_center(mode)
     _hud.add_center(_outcome)
+    var intro_layer: CanvasLayer = CanvasLayer.new()
+    intro_layer.layer = 3
+    add_child(intro_layer)
+    _intro = MeteorIntro.new()
+    _intro.finished.connect(_on_intro_finished)
+    intro_layer.add_child(_intro)
+
+
+## Mientras dura la presentación, la red sigue viva pero la órbita no avanza.
+func _physics_process(delta: float) -> void:
+    if _session == null:
+        return
+    if _intro != null and _intro.step != MeteorIntro.Step.DONE:
+        _session.poll()
+        return
+    super(delta)
+
+
+func _on_intro_finished() -> void:
+    if _pilot != null:
+        _pilot.paused = false
+    _was_enter_pressed = true
 
 
 func _build_session(session_options: SessionOptions) -> MissionSession:
@@ -54,6 +78,8 @@ func _panel_for(client: MatchClient) -> Node:
         station.enable_goal()
         return station
     var pilot: MeteorPilotPanel = MeteorPilotPanel.new()
+    pilot.paused = _intro == null or _intro.step != MeteorIntro.Step.DONE
+    _pilot = pilot
     # Con un solo teclado (pantalla dividida) el piloto usa las flechas.
     var scheme: InputSource.Scheme = InputSource.Scheme.ARROWS if options.mode == SessionOptions.Mode.SPLIT_SCREEN else InputSource.Scheme.BOTH
     pilot.setup(client, InputSource.new(scheme))

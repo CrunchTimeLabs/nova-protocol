@@ -32,6 +32,11 @@ const SAFE_RADIUS := 1
 
 var maze: Maze
 var active: Array[CaveIn] = []
+## Celdas que también se protegen (otros que caminan a la vez): nada cae junto a ellas y siempre conservan
+## camino a la meta. Vacío = solo la celda protegida que se pasa en cada llamada.
+var also_protected: Array[Vector2i] = []
+## Meta que debe seguir alcanzable; (-1, -1) = la salida del laberinto (`Maze.exit_cell`).
+var goal: Vector2i = Vector2i(-1, -1)
 
 var _rng: GameRandom
 var _interval_min: float
@@ -120,12 +125,22 @@ func block_in_front(cell: Vector2i, dir: int, duration: float, protected_cell: V
     var other: Vector2i = cell + (Maze.STEP[dir] as Vector2i)
     if not maze.contains(cell) or not maze.contains(other) or maze.has_wall(cell, dir) or is_blocked(cell, dir):
         return null
+    for extra: Vector2i in also_protected:
+        if extra != protected_cell and (_near(cell, extra) or _near(other, extra)):
+            return null
     var cave_in: CaveIn = _normalized(cell, dir, duration)
     active.append(cave_in)
-    if not distances_from(protected_cell).has(maze.exit_cell()):
-        active.erase(cave_in)
-        return null
+    var target: Vector2i = goal_cell()
+    for walker: Vector2i in [protected_cell] + also_protected:
+        if not distances_from(walker).has(target):
+            active.erase(cave_in)
+            return null
     return cave_in
+
+
+## La celda a la que siempre debe quedar camino.
+func goal_cell() -> Vector2i:
+    return maze.exit_cell() if goal.x < 0 else goal
 
 
 func is_blocked(cell: Vector2i, dir: int) -> bool:

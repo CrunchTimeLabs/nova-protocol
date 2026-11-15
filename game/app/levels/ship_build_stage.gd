@@ -9,11 +9,18 @@ const CONTINUE_SIZE := Vector2(200, 52)
 const CONTINUE_MARGIN := 24.0
 
 var _continue: Button
+var _workshop: ShipWorkshop
 
 
 func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     var workshop: ShipWorkshop = ShipWorkshop.new()
+    # En la campaña solo se usan las piezas base y las que se ganaron en la fundición.
+    for part: RocketParts.Part in RocketParts.BASE_PARTS:
+        workshop.available_parts.append(part)
+    for part: int in CampaignState.unlocked_parts:
+        workshop.available_parts.append(part)
+    _workshop = workshop
     workshop.exit_requested.connect(_on_exit)
     workshop.orbit_reached.connect(_on_orbit_reached)
     add_child(workshop)
@@ -28,6 +35,7 @@ func _ready() -> void:
 
 
 func _on_orbit_reached() -> void:
+    CampaignState.rocket = _workshop.rocket_parts()
     _continue.visible = true
 
 

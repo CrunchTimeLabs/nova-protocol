@@ -46,6 +46,7 @@ func _ready() -> void:
 	background.color = BACKGROUND
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
+	add_child(StartBackdrop.new())
 
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -121,6 +122,7 @@ func _add_button(text: String, handler: Callable) -> void:
 
 
 func _on_start() -> void:
+	CampaignState.reset()
 	SceneRoutes.go_to(get_tree(), Campaign.first())
 
 

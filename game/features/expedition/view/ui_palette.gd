@@ -7,29 +7,36 @@ extends RefCounted
 
 const SCREEN := Vector2(1280, 760)
 
-const BACKGROUND := Color8(0, 0, 0)
-const PANEL := Color8(24, 24, 24)
-const PANEL_ALT := Color8(48, 48, 48)
-const BORDER := Color8(200, 200, 200)
-const BORDER_DIM := Color8(96, 96, 96)
-const TEXT := Color8(255, 255, 255)
-const GRAY := Color8(160, 160, 160)
-const OK := Color8(220, 220, 220)
-const WARNING := Color8(170, 170, 170)
-const DANGER := Color8(120, 120, 120)
-const SCIENCE := Color8(200, 200, 200)
-const BEACON := Color8(230, 230, 230)
+const BACKGROUND := Color8(6, 9, 18)
+const PANEL := Color8(14, 22, 36)
+const PANEL_ALT := Color8(24, 38, 60)
+const BORDER := Color8(0, 200, 240)
+const BORDER_DIM := Color8(48, 76, 110)
+const TEXT := Color8(224, 238, 252)
+const GRAY := Color8(140, 163, 190)
+const OK := Color8(60, 230, 140)
+const WARNING := Color8(255, 185, 50)
+const DANGER := Color8(255, 80, 80)
+const SCIENCE := Color8(190, 115, 255)
+const BEACON := Color8(120, 240, 255)
 
-const BAR_BACK := Color8(40, 40, 40)
-const HULL_BAR_BACK := Color8(40, 40, 40)
-const PANEL_ALPHA := 1.0
-const HEADER_ALPHA := 1.0
+const BAR_BACK := Color8(26, 38, 56)
+const HULL_BAR_BACK := Color8(30, 14, 18)
+const PANEL_ALPHA := 0.88
+const HEADER_ALPHA := 0.94
 
 const RES_COLORS: Dictionary = {
-    Catalog.Res.METAL: Color8(230, 230, 230),
-    Catalog.Res.CRYSTAL: Color8(180, 180, 180),
-    Catalog.Res.FUEL: Color8(130, 130, 130),
+    Catalog.Res.METAL: Color8(176, 182, 194),
+    Catalog.Res.CRYSTAL: Color8(90, 190, 255),
+    Catalog.Res.FUEL: Color8(255, 170, 60),
 }
+## Cada instrumento con su color (tarjetas, cabeceras y barras): fáciles de distinguir.
+const INSTRUMENT_COLORS: Dictionary = {
+    "espectroscopio": Color8(190, 115, 255),
+    "difractometro": Color8(60, 230, 200),
+    "radiometro": Color8(255, 150, 60),
+}
+
 
 ## Tamaños de letra, como en la versión pygame.
 const HUGE := 44
@@ -47,6 +54,10 @@ static func font(bold: bool = false) -> Font:
 ## Color con brillo extra para que lo recoja el glow.
 static func glow(color: Color, strength: float = 1.6) -> Color:
     return UiDraw.glow(color, strength)
+
+
+static func instrument_color(id: String) -> Color:
+    return INSTRUMENT_COLORS.get(id, SCIENCE)
 
 
 static func resource_color(res: Catalog.Res) -> Color:

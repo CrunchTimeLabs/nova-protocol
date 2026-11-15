@@ -131,3 +131,24 @@ func test_front_chance_is_about_thirty_percent() -> void:
     var ratio: float = float(hits) / float(draws)
     check(draws > 200, "suficientes derrumbes (%d)" % draws)
     check(ratio > 0.22 and ratio < 0.38, "cerca del 30 %% delante (%.2f)" % ratio)
+
+
+func test_also_protected_cells_keep_clear_and_reach_the_goal() -> void:
+    var maze: Maze = Maze.generate(21, 13, GameRandom.new(5))
+    var goal: Vector2i = Vector2i(10, 12)
+    maze.open_border(goal, Maze.S)
+    var cave_ins: MazeCaveIns = MazeCaveIns.new(maze, GameRandom.new(5), Vector2(1.0, 1.0), Vector2(30.0, 30.0), 40)
+    cave_ins.goal = goal
+    var first: Vector2i = Vector2i(2, 6)
+    var second: Vector2i = Vector2i(18, 6)
+    cave_ins.also_protected = [first, second]
+    for i: int in 30:
+        cave_ins.drop(first, [], 3)
+    check(cave_ins.active.size() > 10, "caen derrumbes (%d)" % cave_ins.active.size())
+    for cave_in: MazeCaveIns.CaveIn in cave_ins.active:
+        var other: Vector2i = cave_in.cell + (Maze.STEP[cave_in.dir] as Vector2i)
+        for walker: Vector2i in [first, second]:
+            var near: int = mini(absi(cave_in.cell.x - walker.x) + absi(cave_in.cell.y - walker.y), absi(other.x - walker.x) + absi(other.y - walker.y))
+            check(near > MazeCaveIns.SAFE_RADIUS, "nada cae junto a %s" % str(walker))
+    check(cave_ins.distances_from(first).has(goal), "el primero llega a la meta")
+    check(cave_ins.distances_from(second).has(goal), "el segundo llega a la meta")

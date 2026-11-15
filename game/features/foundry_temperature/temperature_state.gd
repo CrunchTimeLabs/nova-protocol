@@ -23,6 +23,8 @@ const ALERT_INTERVAL: float = 3.0
 const MATCH_SECONDS: int = 20
 const LOG_LINES: int = 6
 
+## °C/s que mueve el jugador (sin la ayuda); quien compone puede cambiarla en cada paso (aceleración).
+var player_rate: float = PLAYER_RATE
 var gauge: UnstableGauge
 var progress: ResourceMeter = ResourceMeter.new(1.0, 0.0)
 var log: MessageLog = MessageLog.new(LOG_LINES)
@@ -102,7 +104,7 @@ func step(delta: float, push_direction: float, is_boosted: bool = false) -> void
         return
     if _has_own_clock:
         _clock.tick(delta)
-    var rate: float = PLAYER_RATE * (BOOST_FACTOR if is_boosted else 1.0)
+    var rate: float = player_rate * (BOOST_FACTOR if is_boosted else 1.0)
     gauge.push(clampf(push_direction, -1.0, 1.0) * rate * delta)
     gauge.step(delta, push_direction != 0.0)
     if _is_standalone:

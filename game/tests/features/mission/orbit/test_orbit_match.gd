@@ -152,3 +152,20 @@ func test_leaving_the_map_loses() -> void:
     _place_ship(inside, Vector2(0.99, 0.5))
     inside.step(1.0 / 60.0)
     check_equal(inside.outcome, OrbitMatch.Outcome.PLAYING, "dentro del mapa se sigue jugando")
+
+
+## La nave que cae hacia el sol lo cruza y vuelve a salir sin ganar energía (antes salía despedida del mapa).
+func test_falling_through_the_sun_does_not_diverge() -> void:
+    var match_rules: OrbitMatch = OrbitMatch.new()
+    var start: Vector2 = OrbitMatch.STAR_CENTER + Vector2(0.12, 0.0)
+    match_rules.body.restore({"x": start.x, "y": start.y, "vx": 0.0, "vy": 0.0005, "fuel": 1.0})
+    var farthest: float = 0.0
+    var closest: float = 1.0
+    for i: int in 600:
+        match_rules.body.step(1.0 / 60.0)
+        var distance: float = match_rules.body.position.distance_to(OrbitMatch.STAR_CENTER)
+        farthest = maxf(farthest, distance)
+        closest = minf(closest, distance)
+    check(closest < 0.03, "pasa por el centro del sol (%.3f)" % closest)
+    check(farthest < 0.13, "no sale más lejos de donde empezó (%.3f)" % farthest)
+    check(match_rules.body.velocity.length() < 1.0, "la velocidad no se dispara")
