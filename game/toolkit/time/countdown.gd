@@ -16,9 +16,19 @@ var value: int:
     get:
         return _value
 
-var _value: int = START_VALUE
+var _value: int
+var _interval: float
+var _step: int
 var _elapsed: float = 0.0
 var _is_exhausted: bool = false
+
+
+## Sin argumentos usa los valores por defecto (10, cada 2 s, de 1 en 1).
+func _init(p_start: int = START_VALUE, p_interval: float = INTERVAL_SECONDS, p_step: int = STEP) -> void:
+    assert(p_interval > 0.0 and p_step > 0, "Countdown necesita intervalo y paso positivos")
+    _value = p_start
+    _interval = p_interval
+    _step = p_step
 
 
 func is_exhausted() -> bool:
@@ -31,9 +41,9 @@ func tick(delta: float) -> void:
     if _is_exhausted or delta <= 0.0:
         return
     _elapsed += delta
-    while _elapsed >= INTERVAL_SECONDS:
-        _elapsed -= INTERVAL_SECONDS
-        _value = maxi(_value - STEP, 0)
+    while _elapsed >= _interval:
+        _elapsed -= _interval
+        _value = maxi(_value - _step, 0)
         if _value == 0:
             _is_exhausted = true
             _elapsed = 0.0

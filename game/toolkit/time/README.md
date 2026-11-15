@@ -10,7 +10,7 @@ Tiempo de juego sin nodos: cuenta atrás, ciclo de pasos con duración, semáfor
 - DADO un semáforo CUANDO pasan 3 s por luz ENTONCES va rojo → amarillo → verde → rojo (`TrafficLight`).
 
 ## Qué reutilizar
-- `Countdown`, `TimedCycle`, `TrafficLight`.
+- `Countdown` (valor inicial, intervalo y paso configurables; por defecto 10, cada 2 s, de 1 en 1), `TimedCycle`, `TrafficLight`.
 - `ChanceWindow` (`tick`, `time_to_event`). Nuevo porque `TimedCycle` y `Countdown` son de ritmo fijo, sin probabilidad ni momento al azar.
 
 ## Depende de

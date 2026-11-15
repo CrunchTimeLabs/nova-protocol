@@ -19,6 +19,7 @@ const LABS: Array = [
 	["Cargo hold", SceneRoutes.CARGO_HOLD_LAB],
 	["Drag drop", SceneRoutes.DRAG_DROP_LAB],
 	["Fundición", SceneRoutes.FOUNDRY_LAB],
+	["Fundición temperatura", SceneRoutes.FUNDICION_TEMPERATURA],
 	["Maze", SceneRoutes.MAZE_LAB],
 	["Recolección", SceneRoutes.COLLECTION_LAB],
 	["Nave", SceneRoutes.SHIP_LAB],

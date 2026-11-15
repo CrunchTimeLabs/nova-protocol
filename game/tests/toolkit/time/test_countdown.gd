@@ -50,3 +50,14 @@ func test_ignores_non_positive_delta() -> void:
     _countdown.tick(0.0)
     _countdown.tick(-5.0)
     check_equal(_countdown.value, 10, "un delta no positivo no altera el contador")
+
+
+func test_configurable_start_interval_and_step() -> void:
+    var custom: Countdown = Countdown.new(20, 1.0, 1)
+    custom.tick(1.0)
+    check_equal(custom.value, 19, "baja 1 por segundo")
+    var exhausted_count: Array[int] = [0]
+    custom.exhausted.connect(func(_countdown: Countdown) -> void: exhausted_count[0] += 1)
+    custom.tick(30.0)
+    check_equal(custom.value, 0, "llega a 0")
+    check_equal(exhausted_count[0], 1, "avisa una sola vez")
