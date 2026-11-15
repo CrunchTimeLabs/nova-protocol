@@ -3,7 +3,8 @@ extends RefCounted
 ## Campo de esquivar: una nave se mueve dentro de un recuadro de tamaño dado y cruzan rocas de derecha a izquierda.
 ## Cada golpe resta casco y da unos segundos de invulnerabilidad. Termina al llegar a `duration` o al quedarse sin casco.
 ## Todo el azar usa la semilla; el tamaño del campo es un parámetro (rocas, velocidades y nave se escalan con él).
-## Sin nodos: la vista lee `ship`, `rocks`, `hull`, `elapsed` y `is_protected()`.
+## Con `wind` > 0 también nacen ondas expansivas (viento solar) que golpean una vez al alcanzar la nave.
+## Sin nodos: la vista lee `ship`, `rocks`, `waves`, `wave_warning`, `hull`, `elapsed` y `is_protected()`.
 
 
 enum Status { RUNNING, ARRIVED, DESTROYED }
@@ -13,30 +14,67 @@ const SHIP_RADIUS: float = 12.0
 const SHIP_SPEED_WIDTHS: float = 0.5
 const SHIP_START: Vector2 = Vector2(0.15, 0.5)
 const HULL_MAX: float = 100.0
-const ROCK_DAMAGE: float = 25.0
-const INVULNERABILITY_SECONDS: float = 1.2
+const ROCK_DAMAGE: float = 11.0
+const INVULNERABILITY_SECONDS: float = 1.15
 const FIRST_ROCK_SECONDS: float = 1.0
-## Segundos entre rocas con densidad 1.0 (a menor densidad, más espacio).
-const ROCK_INTERVAL_SECONDS: float = 1.2
-const INTERVAL_JITTER: float = 0.2
+## Dificultad (del original): a medida que avanza el progreso (0..1) las rocas caen más seguido y más rápido.
+## Segundos entre rocas = (INTERVAL_START - INTERVAL_DROP * progreso^INTERVAL_CURVE) / densidad.
+const INTERVAL_START: float = 0.92
+const INTERVAL_DROP: float = 0.62
+const INTERVAL_CURVE: float = 1.1
 ## Sin rocas nuevas en los últimos segundos.
 const ROCK_CUTOFF_SECONDS: float = 1.5
-## Alturas del campo que miden los radios de las rocas.
-const ROCK_RADII_HEIGHTS: Array[float] = [0.03, 0.045, 0.06]
-const ROCK_SPEED_MIN_WIDTHS: float = 0.18
-const ROCK_SPEED_MAX_WIDTHS: float = 0.30
-const ROCK_DRIFT_HEIGHTS: float = 0.08
+## Pasado este progreso, cada vez hay una probabilidad de que caigan dos rocas juntas.
+const PAIR_FROM_PROGRESS: float = 0.55
+const PAIR_CHANCE: float = 0.4
+## Pasado este progreso, las rocas llevan deriva vertical.
+const DRIFT_FROM_PROGRESS: float = 0.4
+## Alturas del campo que miden los radios de las rocas (14, 18, 22, 28, 34 y 42 px sobre un campo de 760 de alto).
+const ROCK_RADII_HEIGHTS: Array[float] = [0.0184, 0.0237, 0.0289, 0.0368, 0.0447, 0.0553]
+## Anchos de campo por segundo: (SPEED_BASE + SPEED_GAIN * progreso) * (0.8 + 0.3 * densidad) * variación.
+const SPEED_BASE_WIDTHS: float = 0.1688
+const SPEED_GAIN_WIDTHS: float = 0.2063
+const SPEED_JITTER_MIN: float = 0.85
+const SPEED_JITTER_MAX: float = 1.2
+const SPEED_DENSITY_BASE: float = 0.8
+const SPEED_DENSITY_GAIN: float = 0.3
+const ROCK_DRIFT_HEIGHTS: float = 0.079
 const ROCK_MARGIN_HEIGHTS: float = 0.05
+
+## Ondas (viento solar): daño, invulnerabilidad, intervalo (a mayor `wind`, más seguido) y velocidad en anchos por segundo.
+const WAVE_DAMAGE: float = 15.0
+const WAVE_INVULNERABILITY_SECONDS: float = 1.0
+const WAVE_FIRST_SECONDS: float = 4.0
+const WAVE_INTERVAL_MIN_SECONDS: float = 8.0
+const WAVE_INTERVAL_MAX_SECONDS: float = 12.0
+const WAVE_MIN_WIND: float = 0.6
+const WAVE_SPEED_WIDTHS: float = 0.35
+## Sin ondas nuevas en los últimos segundos.
+const WAVE_CUTOFF_SECONDS: float = 3.0
+## La onda nace este múltiplo de su radio inicial fuera del borde; su alcance es el largo de la diagonal por este factor.
+const WAVE_OUTSIDE_MARGIN: float = 6.0
+const WAVE_REACH_FACTOR: float = 1.2
 
 var field_size: Vector2
 var density: float
+var wind: float
 var duration: float
 var hull: ResourceMeter = ResourceMeter.new(HULL_MAX, HULL_MAX)
 var elapsed: float = 0.0
 var status: Status = Status.RUNNING
 var rocks: Array[DodgeRock] = []
+var waves: Array[DodgeWave] = []
+## Cuántas ondas han nacido.
+var waves_spawned: int = 0
 ## Cuántas rocas han nacido (para medir la frecuencia).
 var spawned: int = 0
+## Hay al menos una onda en camino que aún no ha golpeado.
+var wave_warning: bool:
+    get:
+        for wave: DodgeWave in waves:
+            if not wave.has_hit:
+                return true
+        return false
 var ship: Vector2:
     get:
         return _body.position
@@ -47,10 +85,18 @@ var _body: MovementBody
 var _ship_area: Rect2
 var _invulnerable: float = 0.0
 var _next_rock: float = FIRST_ROCK_SECONDS
+var _next_wave: float = WAVE_FIRST_SECONDS
 
 
-func _init(p_size: Vector2, p_density: float, p_duration: float, seed_value: int) -> void:
+func _init(
+        p_size: Vector2,
+        p_density: float,
+        p_duration: float,
+        seed_value: int,
+        p_wind: float = 0.0,
+        ) -> void:
     field_size = p_size
+    wind = maxf(p_wind, 0.0)
     density = maxf(p_density, 0.01)
     duration = p_duration
     _random = GameRandom.new(seed_value)
@@ -74,6 +120,8 @@ func step(delta: float, move: Vector2) -> Status:
     _body.confine(_ship_area)
     _spawn()
     _update_rocks(delta)
+    _spawn_wave()
+    _update_waves(delta)
     _invulnerable = maxf(0.0, _invulnerable - delta)
     elapsed += delta
     if hull.current <= 0.0:
@@ -83,16 +131,29 @@ func step(delta: float, move: Vector2) -> Status:
     return status
 
 
+func progress() -> float:
+    return clampf(elapsed / duration, 0.0, 1.0) if duration > 0.0 else 1.0
+
+
 func _spawn() -> void:
     if elapsed < _next_rock or elapsed >= duration - ROCK_CUTOFF_SECONDS:
         return
-    var jitter: float = _random.range_float(1.0 - INTERVAL_JITTER, 1.0 + INTERVAL_JITTER)
-    _next_rock = elapsed + ROCK_INTERVAL_SECONDS / density * jitter
+    var p: float = progress()
+    _next_rock = elapsed + (INTERVAL_START - INTERVAL_DROP * pow(p, INTERVAL_CURVE)) / density
+    var count: int = 2 if p > PAIR_FROM_PROGRESS and _random.chance(PAIR_CHANCE) else 1
+    for _i: int in range(count):
+        _spawn_rock(p)
+
+
+func _spawn_rock(p: float) -> void:
     var radius: float = float(_random.pick(ROCK_RADII_HEIGHTS)) * field_size.y
     var margin: float = ROCK_MARGIN_HEIGHTS * field_size.y
     var y: float = _random.range_float(margin, field_size.y - margin)
-    var speed: float = _random.range_float(ROCK_SPEED_MIN_WIDTHS, ROCK_SPEED_MAX_WIDTHS) * field_size.x
-    var drift: float = _random.range_float(-ROCK_DRIFT_HEIGHTS, ROCK_DRIFT_HEIGHTS) * field_size.y
+    var base_speed: float = (SPEED_BASE_WIDTHS + SPEED_GAIN_WIDTHS * p) * (SPEED_DENSITY_BASE + SPEED_DENSITY_GAIN * density)
+    var speed: float = base_speed * _random.range_float(SPEED_JITTER_MIN, SPEED_JITTER_MAX) * field_size.x
+    var drift: float = 0.0
+    if p > DRIFT_FROM_PROGRESS:
+        drift = _random.range_float(-ROCK_DRIFT_HEIGHTS, ROCK_DRIFT_HEIGHTS) * field_size.y
     rocks.append(DodgeRock.new(Vector2(field_size.x + radius, y), radius, speed, drift, _random))
     spawned += 1
 
@@ -101,6 +162,7 @@ func _update_rocks(delta: float) -> void:
     var alive: Array[DodgeRock] = []
     for rock: DodgeRock in rocks:
         rock.position += Vector2(-rock.speed, rock.drift) * delta
+        rock.spin += rock.spin_speed * delta
         if rock.position.y < 0.0 or rock.position.y > field_size.y:
             rock.drift = -rock.drift
         if rock.position.x + rock.radius < 0.0:
@@ -111,3 +173,29 @@ func _update_rocks(delta: float) -> void:
             continue
         alive.append(rock)
     rocks = alive
+
+
+func _spawn_wave() -> void:
+    if wind <= 0.0 or elapsed < _next_wave or elapsed >= duration - WAVE_CUTOFF_SECONDS:
+        return
+    var interval: float = _random.range_float(WAVE_INTERVAL_MIN_SECONDS, WAVE_INTERVAL_MAX_SECONDS)
+    _next_wave = elapsed + interval / maxf(WAVE_MIN_WIND, wind)
+    var outside: float = DodgeWave.START_RADIUS * WAVE_OUTSIDE_MARGIN
+    var x: float = -outside if _random.chance(0.5) else field_size.x + outside
+    var center: Vector2 = Vector2(x, _random.range_float(0.0, field_size.y))
+    waves.append(DodgeWave.new(center, field_size.x * WAVE_SPEED_WIDTHS, field_size.length() * WAVE_REACH_FACTOR))
+    waves_spawned += 1
+
+
+func _update_waves(delta: float) -> void:
+    var alive: Array[DodgeWave] = []
+    for wave: DodgeWave in waves:
+        wave.advance(delta)
+        if wave.is_gone():
+            continue
+        if not is_protected() and not wave.has_hit and wave.reaches(ship, SHIP_RADIUS):
+            wave.has_hit = true
+            hull.add(-WAVE_DAMAGE)
+            _invulnerable = WAVE_INVULNERABILITY_SECONDS
+        alive.append(wave)
+    waves = alive

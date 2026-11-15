@@ -2,11 +2,14 @@ class_name MeteorPilotPanel
 extends Node
 ## Lado del piloto en el nivel Meteoritos: un `DodgeField` del tamaño real de su recuadro, que maneja con las flechas.
 ## Sus flechas también se traducen a empuje y se envían al anfitrión como en `PilotPanel`. El vuelo (casco, resultado)
-## es local de este lado y no afecta a la estación. Enter reinicia al terminar. Casco y tiempo se ofrecen al HUD con `hud_item()`.
+## es local de este lado y no afecta a la estación. Enter reinicia al terminar. Aviso de viento solar, casco y tiempo se ofrecen al HUD con `hud_item()`.
 
 
-const METEOR_DENSITY: float = 0.5
-const METEOR_SECONDS: float = 45.0
+## Como el primer planeta del original: densidad 1.0 y 68 s de tramo.
+const METEOR_DENSITY: float = 1.0
+const METEOR_SECONDS: float = 68.0
+## Viento solar (ondas expansivas); como el original, 0.5.
+const SOLAR_WIND: float = 0.5
 const FIELD_SEED: int = 7301
 const HEARTBEAT_SECONDS: float = 0.25
 const HULL_BAR_WIDTH: float = 180.0
@@ -22,17 +25,24 @@ var _message: Label = Label.new()
 var _hud_row: HBoxContainer = HBoxContainer.new()
 var _hull_bar: MeterBar = MeterBar.new()
 var _time_label: Label = Label.new()
+var _wind_label: Label = Label.new()
+var _wind_lamp: StatusLamp = StatusLamp.new()
+var _backdrop: ShaderBackdrop = ShaderBackdrop.new()
 var _was_enter_pressed: bool = false
 
 
 func setup(client: MatchClient, input: InputSource) -> void:
     _client = client
     _input = input
+    add_child(_backdrop)
     add_child(_view)
     _message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     add_child(_message)
     _hull_bar.custom_minimum_size = Vector2(HULL_BAR_WIDTH, 0.0)
     _hud_row.add_theme_constant_override("separation", 16)
+    _wind_label.text = "Viento solar"
+    _hud_row.add_child(_wind_label)
+    _hud_row.add_child(_wind_lamp)
     _hud_row.add_child(_hull_bar)
     _hud_row.add_child(_time_label)
 
@@ -58,7 +68,13 @@ func _physics_process(delta: float) -> void:
 
 func _start_run(area: Vector2) -> void:
     _runs += 1
-    _field = DodgeField.new(area, METEOR_DENSITY, METEOR_SECONDS, FIELD_SEED + _runs)
+    _field = DodgeField.new(
+            area,
+            METEOR_DENSITY,
+            METEOR_SECONDS,
+            FIELD_SEED + _runs,
+            SOLAR_WIND,
+            )
     _view.setup(_field)
     _hull_bar.setup(_field.hull)
 
@@ -79,6 +95,8 @@ func _restart_on_enter(area: Vector2) -> void:
 
 func _refresh(area: Vector2) -> void:
     _view.size = area
+    _backdrop.size = area
+    _wind_lamp.set_ok(not _field.wave_warning)
     _time_label.text = "Tiempo: %d s" % ceili(maxf(_field.duration - _field.elapsed, 0.0))
     match _field.status:
         DodgeField.Status.ARRIVED:
