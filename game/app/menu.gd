@@ -14,6 +14,7 @@ const LABS: Array = [
 	["Resource meter", SceneRoutes.RESOURCE_METER_LAB],
 	["Cargo hold", SceneRoutes.CARGO_HOLD_LAB],
 	["Drag drop", SceneRoutes.DRAG_DROP_LAB],
+	["Fundición", SceneRoutes.FOUNDRY_LAB],
 	["Maze", SceneRoutes.MAZE_LAB],
 	["Recolección", SceneRoutes.COLLECTION_LAB],
 	["Countdown", SceneRoutes.COUNTDOWN_LAB],
