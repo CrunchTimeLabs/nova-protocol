@@ -3,7 +3,7 @@
 .nomedia
 
 # Exportación
-export_presets.cfg
+# export_presets.cfg sí se versiona: solo lleva el preset Web, con rutas relativas y sin credenciales
 export/
 build/
 *.apk
