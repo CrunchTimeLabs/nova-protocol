@@ -7,6 +7,8 @@ extends Control
 
 
 signal exit_requested
+## Con `handles_restart` en false, F5 y ENTER (al terminar) piden reiniciar en vez de reiniciar solos: quien compone decide.
+signal restart_requested
 
 const SCALE := 4.0
 const TOP_BAR := 56.0
@@ -34,6 +36,9 @@ const WRONG_TIME := 0.35
 const WARNING_TIME := 5.0
 const MAX_TYPED := 10
 const EMBERS := 40
+
+## Si es false, la pantalla no reinicia su sesión sola (ver `restart_requested`).
+var handles_restart: bool = true
 
 var _run: FoundryRun
 var _sfx: FoundrySfx
@@ -93,6 +98,8 @@ func _process(delta: float) -> void:
     _time += delta
     _run.tick(delta)
     _wrong = maxf(0.0, _wrong - delta)
+    if _run.blocked:
+        _typed = ""
     _lost_flash = maxf(0.0, _lost_flash - delta)
     for mineral: int in _pulse.keys():
         _pulse[mineral] = maxf(0.0, float(_pulse[mineral]) - delta)
@@ -112,10 +119,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_ESCAPE:
             exit_requested.emit()
         KEY_F5:
-            restart(GameRandom.new())
+            _request_restart()
         KEY_ENTER, KEY_KP_ENTER:
             if _run.is_ended():
-                restart(GameRandom.new())
+                _request_restart()
         KEY_BACKSPACE:
             if not _typed.is_empty():
                 _typed = _typed.left(_typed.length() - 1)
@@ -123,9 +130,20 @@ func _unhandled_key_input(event: InputEvent) -> void:
             _type(key.keycode)
 
 
+func _request_restart() -> void:
+    if handles_restart:
+        restart(GameRandom.new())
+    else:
+        restart_requested.emit()
+
+
 ## Acumula letras; si la palabra es un objetivo lo recoge, y si ya no puede serlo se borra con aviso.
 func _type(keycode: Key) -> void:
     if _run.is_ended() or keycode < KEY_A or keycode > KEY_Z:
+        return
+    if _run.blocked:
+        _typed = ""
+        _wrong = WRONG_TIME
         return
     _typed += char(keycode).to_lower()
     _sfx.play(FoundrySfx.Sound.KEY, -4.0, _rng.randf_range(0.9, 1.1))
@@ -418,10 +436,13 @@ func _draw_name(center_x: float, top: float, mineral: FoundryRun.Mineral, alpha:
 func _draw_buffer() -> void:
     var shake: float = sin(_wrong * 60.0) * 8.0 * (_wrong / WRONG_TIME)
     var rect: Rect2 = Rect2(BUFFER.position + Vector2(shake, 0.0), BUFFER.size)
-    var edge: Color = FoundryArt.DANGER if _wrong > 0.0 else FoundryArt.EDGE
+    var edge: Color = FoundryArt.DANGER if _wrong > 0.0 or _run.blocked else FoundryArt.EDGE
     UiDraw.panel(self, rect, Color(0.05, 0.03, 0.025, 0.9), edge)
     if _typed.is_empty():
         var hint: String = "TECLEA EL NOMBRE" if not _run.active.is_empty() else "ESPERA AL MINERAL"
+        if _run.blocked:
+            hint = "BLOQUEADO"
+            UiDraw.text_centered(self, rect.get_center().x, rect.position.y + 40.0, "TEMPERATURA FUERA DE RANGO", 11, FoundryArt.DANGER, true)
         UiDraw.text_centered(self, rect.get_center().x, rect.position.y + 18.0, hint, 18, FoundryArt.MUTED, true)
         return
     var caret: String = "_" if int(_time * 2.5) % 2 == 0 else " "

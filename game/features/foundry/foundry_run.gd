@@ -86,6 +86,8 @@ var resources_lost: int = 0
 var value: int = 0
 var rounds: int = 0
 var ended: End = End.NONE
+## Mientras sea true no se puede recoger nada (lo decide quien orquesta el nivel); los relojes siguen corriendo.
+var blocked: bool = false
 
 var _random: GameRandom
 var _wait: float = 0.0
@@ -137,7 +139,7 @@ func tick(delta: float) -> void:
 ## Recoge el objetivo cuyo nombre coincide con la palabra, sin distinguir mayúsculas.
 ## Si hay varios iguales, se lleva el que tiene menos tiempo. Los demás relojes no cambian.
 func collect(word: String) -> bool:
-    if is_ended():
+    if is_ended() or blocked:
         return false
     var wanted: String = word.strip_edges().to_lower()
     if wanted.is_empty():

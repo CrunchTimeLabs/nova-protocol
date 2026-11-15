@@ -60,3 +60,16 @@ func test_match_ends_after_twenty_seconds_and_stops() -> void:
     var value_then: float = _state.gauge.value
     _state.step(1.0, 1.0)
     check_equal(_state.gauge.value, value_then, "terminada, ya nada cambia")
+
+
+func test_shared_clock_does_not_end_by_itself_and_finish_ends_it() -> void:
+    var shared: TemperatureState = TemperatureState.new(1, false)
+    shared.gauge.drift_speed = 0.0
+    shared.step(float(TemperatureState.MATCH_SECONDS) * 2.0, 0.0)
+    check(not shared.is_over(), "con reloj compartido no termina por tiempo propio")
+    shared.sync_time(7)
+    check_equal(shared.time_left(), 7, "muestra el tiempo que le dan")
+    shared.finish()
+    var value_then: float = shared.gauge.value
+    shared.step(1.0, 1.0)
+    check(shared.is_over() and shared.gauge.value == value_then, "finish() lo termina y ya nada cambia")

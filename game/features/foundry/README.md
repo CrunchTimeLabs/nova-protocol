@@ -41,9 +41,11 @@ Funcionamiento de cada ronda:
 - `tick(delta)` avanza la sesión, `collect(word)` intenta recoger un mineral y `count(mineral)` consulta un contador.
 - Señales para la vista: `group_spawned`, `selected`, `collected`, `expired` y `run_ended`.
 
+- DADO `blocked` en true CUANDO se intenta recoger ENTONCES se rechaza sin cambiar nada y los relojes siguen corriendo (lo usa el nivel «Fundición dúo» con la temperatura).
+
 ## Vista (`view/`)
 
-- `FoundryScreen`: la pantalla completa. Tiene:
+- `FoundryScreen`: la pantalla completa. Con `handles_restart` en false, F5/ENTER emiten `restart_requested` en vez de reiniciar solos, y si `run.blocked` ignora las letras y muestra «BLOQUEADO». Tiene:
   - el fondo del horno, el reloj de arena, la tolva sobre la cinta y las tarjetas del centro (imagen, nombre, barra verde→amarilla→roja y estado);
   - el almacén con los contadores, los recursos y el resumen final;
   - animaciones de caída, vuelo al centro, vuelo al almacén, brasas y el temblor del texto si una letra es incorrecta.
@@ -60,5 +62,5 @@ Funcionamiento de cada ronda:
 
 ## Cubierto por
 
-- Laboratorio: `app/labs/foundry.gd` y `scenes/foundry_lab.tscn`.
+- Laboratorio: `app/labs/foundry.gd` y `scenes/foundry_lab.tscn`; nivel `app/levels/foundry_duo_level.gd`.
 - Pruebas: `tests/features/foundry/test_foundry_run.gd` (14 pruebas).

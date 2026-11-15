@@ -1,5 +1,7 @@
 # mission/tap
 
+> **Candidato a remover:** no tiene ruta ni entrada en el menú, y el nivel «Fundición dúo» (`app/levels/foundry_duo_level.gd`) cubre una señal entre lados con otras mecánicas. Se deja hasta decidirlo.
+
 ## Propósito
 Misión mínima para dos jugadores en pantalla dividida: el emisor pide popups y el receptor los pulsa antes de que caduquen. Dura 20 s.
 

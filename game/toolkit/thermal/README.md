@@ -9,7 +9,7 @@ Una magnitud (temperatura) que se mueve sola de forma inestable y que el jugador
 - DADO una escala, un rango objetivo y una lectura CUANDO se dibuja ENTONCES se ve el arco con marcas, el rango resaltado y la aguja (`DialView`).
 
 ## Qué reutilizar
-- `UnstableGauge` (valor con deriva aleatoria con semilla; `drift_speed` y `change_interval` ajustables) y la vista `DialView`.
+- `UnstableGauge` (valor con deriva aleatoria con semilla; `drift_speed` y `change_interval` ajustables) y la vista `DialView` (colores configurables con `set_colors`).
 - No usa `Countdown`/`TimedCycle` para la deriva: la dirección cambia a un intervalo propio y no recorre una secuencia de pasos.
 
 ## Depende de

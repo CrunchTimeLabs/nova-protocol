@@ -9,12 +9,16 @@
 - DADO la aguja fuera del rango ENTONCES el foco se pone en rojo, el progreso se congela y se avisa cada `ALERT_INTERVAL` hacia dónde corregir; al volver, continúa.
 - DADO que pasan 20 s ENTONCES la partida termina y se muestran los aciertos; `R` reinicia.
 
+- DADO un reloj compartido (`own_clock` en false) CUANDO lo lleva otro ENTONCES la partida solo termina con `finish()` y muestra el tiempo de `sync_time()` (nivel «Fundición dúo»).
+
 ## Qué reutilizar
 - `TemperatureState` (orquestador), `TemperatureTargets` (objetivos con semilla) y la vista `TemperaturePanel`.
 - Constantes ajustables: `PLAYER_RATE`, `HOLD_SECONDS`, `ALERT_INTERVAL`, `MATCH_SECONDS`, `TARGET_INTERVAL`, `TARGET_RANGES`.
 
 ## Depende de
 `toolkit/thermal` (`UnstableGauge`, `DialView`), `toolkit/core` (`GameRandom`, `ResourceMeter`, `MessageLog`, `MeterBar`), `toolkit/time` (`Countdown`), `toolkit/ui` (`StatusLamp`).
+
+`TemperaturePanel` acepta fondo, paleta y textos configurables antes de `setup`: el nivel le da el arte de la fundición sin que esta feature la importe.
 
 ## Cubierto por
 Lab «Fundición temperatura» (`app/labs/foundry_temperature.gd`); `tests/features/foundry_temperature/`.

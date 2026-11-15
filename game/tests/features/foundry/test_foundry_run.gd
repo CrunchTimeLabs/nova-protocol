@@ -236,3 +236,17 @@ func test_level_ends_at_twenty_seconds_and_stops_everything() -> void:
     check_equal(_counts(), counts, "los contadores quedan con el total final")
     check(not _run.collect("oro") and not _run.collect("cobre") and not _run.collect("hierro"), "ya no se recoge")
     check_equal(_ended_count, 1, "no vuelve a emitir el final")
+
+
+func test_blocked_run_rejects_collecting_but_clocks_keep_running() -> void:
+    var target: FoundryRun.Spawn = _first_target()
+    var word: String = String(FoundryRun.NAMES[target.mineral])
+    var counts_before: Array[int] = _counts()
+    var remaining_before: float = target.remaining
+    _run.blocked = true
+    check(not _run.collect(word), "bloqueada, la palabra correcta no se recoge")
+    check_equal(_counts(), counts_before, "los contadores no cambian")
+    _run.tick(0.5)
+    check(target.remaining < remaining_before, "los relojes siguen corriendo bloqueada")
+    _run.blocked = false
+    check(_run.collect(word), "al desbloquear, se recoge")

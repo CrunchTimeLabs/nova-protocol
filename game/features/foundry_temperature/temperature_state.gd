@@ -27,12 +27,17 @@ var target_low: float = 0.0
 var target_high: float = 0.0
 
 var _clock: Countdown = Countdown.new(MATCH_SECONDS, 1.0, 1)
+var _has_own_clock: bool
+var _is_finished: bool = false
+var _external_left: int = MATCH_SECONDS
 var _hold: float = 0.0
 var _alert_elapsed: float = ALERT_INTERVAL
 
 
 ## `seed_value` < 0: semilla aleatoria. El primer objetivo se anuncia al crearlo.
-func _init(seed_value: int = -1) -> void:
+## `own_clock` false: el tiempo lo lleva otro (un reloj compartido): se avisa con sync_time() y finish().
+func _init(seed_value: int = -1, own_clock: bool = true) -> void:
+    _has_own_clock = own_clock
     gauge = UnstableGauge.new(seed_value)
     targets = TemperatureTargets.new(seed_value + 1 if seed_value >= 0 else -1)
     targets.target_announced.connect(_on_target_announced)
@@ -44,19 +49,30 @@ func is_in_range() -> bool:
 
 
 func is_over() -> bool:
-    return _clock.is_exhausted()
+    return _is_finished or _clock.is_exhausted()
 
 
 ## Segundos que quedan.
 func time_left() -> int:
-    return _clock.value
+    return _clock.value if _has_own_clock else _external_left
+
+
+## Termina la partida desde fuera (con reloj compartido).
+func finish() -> void:
+    _is_finished = true
+
+
+## Con reloj compartido: segundos que quedan según quien lo lleva.
+func sync_time(seconds_left: int) -> void:
+    _external_left = seconds_left
 
 
 ## Un paso. `push_direction`: +1 sube, -1 baja, 0 nada (magnitud limitada a 1). Terminada la partida ya no cambia nada.
 func step(delta: float, push_direction: float) -> void:
     if is_over() or delta <= 0.0:
         return
-    _clock.tick(delta)
+    if _has_own_clock:
+        _clock.tick(delta)
     gauge.push(clampf(push_direction, -1.0, 1.0) * PLAYER_RATE * delta)
     gauge.step(delta)
     targets.tick(delta)
