@@ -5,7 +5,7 @@
 Minijuego de fundición según el guion de `MAYBER/message.txt`. Tiene dos relojes independientes:
 
 - **Nivel (20 s):** el reloj de arena. Al agotarse se detienen las apariciones y todos los temporizadores.
-- **Mineral (4–7 s):** cada objetivo tiene el suyo, sorteado según su tipo. Arranca solo cuando el mineral es elegido y pasa al centro.
+- **Mineral (6–9 s):** cada objetivo tiene el suyo, sorteado según su tipo. Arranca solo cuando el mineral es elegido y pasa al centro.
 
 Funcionamiento de cada ronda:
 

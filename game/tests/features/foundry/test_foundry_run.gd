@@ -106,12 +106,12 @@ func test_same_seed_repeats_rounds() -> void:
         check_approx(first.active[index].remaining, second.active[index].remaining, "mismo tiempo en %d" % index)
 
 
-func test_lifetime_depends_on_mineral_and_stays_between_four_and_seven() -> void:
+func test_lifetime_depends_on_mineral_and_stays_between_six_and_nine() -> void:
     var gold: Vector2 = FoundryRun.LIFETIMES[FoundryRun.Mineral.GOLD]
     var iron: Vector2 = FoundryRun.LIFETIMES[FoundryRun.Mineral.IRON]
     var copper: Vector2 = FoundryRun.LIFETIMES[FoundryRun.Mineral.COPPER]
     check(gold.y <= iron.x and iron.y <= copper.x, "oro con menos tiempo, cobre con más, hierro en medio")
-    check(gold.x >= FoundryRun.MIN_LIFETIME and copper.y <= FoundryRun.MAX_LIFETIME, "todo entre 4 y 7 s")
+    check(gold.x >= FoundryRun.MIN_LIFETIME and copper.y <= FoundryRun.MAX_LIFETIME, "todo entre 6 y 9 s")
     var lifetimes: Dictionary = {}
     for seed_value: int in 40:
         var run: FoundryRun = FoundryRun.new(GameRandom.new(seed_value))

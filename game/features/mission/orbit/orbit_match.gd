@@ -25,7 +25,7 @@ const KEY_FUEL: String = "fuel"
 const KEY_PHASE: String = "phase"
 const KEY_OUTCOME: String = "outcome"
 ## Radio (en el mapa normalizado) alrededor de la luna que la nave debe cruzar para ganar.
-const MOON_GOAL_RADIUS: float = 0.07
+const MOON_GOAL_RADIUS: float = 0.14
 ## La nave pierde si sale del mapa normalizado [0, 1] por más que este margen: ya no hay órbita que recuperar.
 const ESCAPE_MARGIN: float = 0.0
 

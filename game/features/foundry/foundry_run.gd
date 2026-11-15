@@ -2,7 +2,7 @@ class_name FoundryRun
 extends RefCounted
 ## Minijuego de fundición (guion de MAYBER). Dos relojes independientes:
 ## - el del nivel (20 s, el reloj de arena): al agotarse se detiene todo;
-## - el de cada mineral (4–7 s según su tipo), que solo arranca cuando el mineral es elegido y va al centro.
+## - el de cada mineral (6–9 s según su tipo), que solo arranca cuando el mineral es elegido y va al centro.
 ## Por ronda sale un grupo de 3 o 4 minerales a la tolva (cada mineral nuevo gasta recursos); de la tolva se
 ## eligen al azar 1 o 2 que pasan al centro como objetivos. Los no elegidos se quedan esperando y entran en el
 ## grupo siguiente. El jugador teclea el nombre para recoger un objetivo; si su tiempo se agota, desaparece y
@@ -19,15 +19,15 @@ const NAMES: Dictionary = {
     Mineral.GOLD: "Oro",
 }
 const TIME_LIMIT := 20.0
-const MIN_LIFETIME := 4.0
-const MAX_LIFETIME := 7.0
+const MIN_LIFETIME := 6.0
+const MAX_LIFETIME := 9.0
 ## Oro: raro, valioso y con poco tiempo. Cobre: común, barato y con más tiempo. Hierro: intermedio.
 const WEIGHTS: Dictionary = {Mineral.IRON: 33, Mineral.COPPER: 50, Mineral.GOLD: 17}
 const VALUES: Dictionary = {Mineral.IRON: 20, Mineral.COPPER: 10, Mineral.GOLD: 50}
 const LIFETIMES: Dictionary = {
-    Mineral.IRON: Vector2(5.0, 6.0),
-    Mineral.COPPER: Vector2(6.0, 7.0),
-    Mineral.GOLD: Vector2(4.0, 5.0),
+    Mineral.IRON: Vector2(7.0, 8.0),
+    Mineral.COPPER: Vector2(8.0, 9.0),
+    Mineral.GOLD: Vector2(6.0, 7.0),
 }
 ## Recursos que cuesta generar cada mineral (no se devuelven si se pierde).
 const COSTS: Dictionary = {Mineral.IRON: 2, Mineral.COPPER: 1, Mineral.GOLD: 4}
