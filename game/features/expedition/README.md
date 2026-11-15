@@ -9,6 +9,7 @@ Nivel de campaña "Expedición": laberinto → fundición → bodega → despegu
 - DADO un tramo de vuelo CUANDO el casco llega a 0 ENTONCES se pierde y va al informe; si no, llega y se orbita (`MissionFlow`).
 - DADO el modo meteoritos (`Flight.meteor_field`) CUANDO se vuela ENTONCES caen solo rocas, con la densidad pedida, y siguen haciendo daño.
 - DADO un planeta CUANDO se analiza ENTONCES se gasta un análisis y se gana ciencia según el resultado (`AnalysisSession`).
+- DADO el nivel Análisis (`AnalysisLevel`) CUANDO arranca ENTONCES la nave lleva un equipo fijo (tres analizadores, sin mejoras) y orbita la Luna; al continuar, informe y vuelta al menú.
 
 ## Qué reutilizar
 - `MissionFlow` (flujo), `Expedition` (estado), `Catalog` (datos), `MazeRun`, `Flight`, `AnalysisSession`, `AnalysisLedger`; vistas en cada `view/`.
@@ -17,4 +18,4 @@ Nivel de campaña "Expedición": laberinto → fundición → bodega → despegu
 `toolkit/core`, `maze`, `inventory`, `precision`, `drag_drop`, `ui`, `fx`.
 
 ## Cubierto por
-Nivel `app/levels/expedition.gd` ("Start"); `tests/features/expedition/`.
+Niveles `app/levels/expedition.gd` ("Start") y `app/levels/analysis.gd` ("Análisis"); `tests/features/expedition/`.

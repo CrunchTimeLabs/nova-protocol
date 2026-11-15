@@ -11,6 +11,7 @@ const BACK_MARGIN := Vector2(16, 16)
 const LEVELS: Array = [
 	["Meteoritos", SceneRoutes.METEOR_MISSION],
 	["Fundición dúo", SceneRoutes.FOUNDRY_DUO_LEVEL],
+	["Análisis", SceneRoutes.ANALYSIS_LEVEL],
 ]
 ## Labs de las features: [título, ruta de la escena].
 const LABS: Array = [

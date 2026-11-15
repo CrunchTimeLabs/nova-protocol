@@ -1,3 +1,4 @@
+class_name ExpeditionLevel
 extends Node
 ## Nivel Expedición: punto de composición. Crea la data, la expedición y el orquestador, y muestra la pantalla de
 ## cada paso al instante. Sin fondo, sonido ni transiciones. No tiene reglas. Esc vuelve al menú.
