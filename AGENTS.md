@@ -20,7 +20,7 @@ Referencia externa (solo lectura): `../game-mechanics/` (catálogo de mecánicas
 2. **Dominio sin pantalla.** Las reglas viven en clases `RefCounted` sin nodos, escenas ni `get_tree()`. Un `Node` solo puede estar en una carpeta `view/` (junto al dominio que dibuja) o en `app/` (composición). Las vistas leen estado y emiten señales; nunca deciden reglas.
 3. **Lógica y dibujo separados.** Quien define el comportamiento de una pieza no la dibuja, y el dibujo no cambia su estado.
 4. **Determinismo.** Todo azar pasa por un generador con semilla (`GameRandom`). Prohibido `randi()`, `randf()` o `randomize()` sueltos en reglas.
-5. **Sin singletons ni autoloads.** Las dependencias se pasan por parámetro; un único punto de composición conoce a todas las piezas.
+5. **Sin singletons ni autoloads.** Las dependencias se pasan por parámetro; un único punto de composición conoce a todas las piezas. Única excepción: servicios de ventana sin reglas de juego (`FullscreenToggle`, pantalla completa).
 6. **Tipos explícitos y enums.** Variables, parámetros y retornos con tipo; nada de `:=` sobre valores que Godot no pueda tipar (diccionarios, `.get()`, `InputEvent`). Los conceptos de juego son enums agrupados en la clase a la que pertenecen, no cadenas; un `match` sobre un enum cubre todos sus valores.
 7. **Datos, no números mágicos.** Costos, umbrales y balance son constantes con nombre (o datos) en el objeto que los usa.
 8. **Flujo explícito.** Estados y transiciones se declaran en un solo sitio y una transición ilegal es un error visible. El orden de un turno o ciclo está escrito en código, de arriba abajo.
