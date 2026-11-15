@@ -83,9 +83,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show_main() -> void:
 	_show_menu("NOVA PROTOCOL", 1)
 	_add_button("Start", _on_start)
-	_add_button("Old", _on_old)
-	_add_button("Levels", _show_levels)
-	_add_button("Labs", _show_labs)
+	#_add_button("Old", _on_old)
+	#_add_button("Levels", _show_levels)
+	#_add_button("Labs", _show_labs)
 	if not OS.has_feature("web"):          # en navegador no hay a dónde "salir"
 		_add_button("Exit", _on_exit)
 
