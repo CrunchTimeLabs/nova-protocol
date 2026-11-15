@@ -15,6 +15,7 @@ const LABS: Array = [
 	["Cargo hold", SceneRoutes.CARGO_HOLD_LAB],
 	["Drag drop", SceneRoutes.DRAG_DROP_LAB],
 	["Maze", SceneRoutes.MAZE_LAB],
+	["Recolección", SceneRoutes.COLLECTION_LAB],
 	["Countdown", SceneRoutes.COUNTDOWN_LAB],
 	["Precision", SceneRoutes.PRECISION_LAB],
 	["Wiring", SceneRoutes.WIRING_LAB],
