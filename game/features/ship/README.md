@@ -8,6 +8,7 @@ Nave: armar el cohete arrastrando piezas de pixel art (carga útil, aviónica, t
 - DADO una pieza CUANDO se suelta cerca del cohete ENTONCES se acomoda sola en su sección (sustituye la que hubiera); soltada lejos vuelve a su tarjeta.
 - DADO una pieza del cohete CUANDO se arrastra fuera ENTONCES se quita; R vacía el cohete.
 - DADO las 5 secciones llenas CUANDO se pulsa DESPEGAR o ESPACIO ENTONCES cuenta atrás 3-2-1, despega el cohete armado con llama, humo y temblor, llega a órbita y vuelve al hangar conservando el cohete.
+- DADO el cohete armado CUANDO llega a órbita ENTONCES `ShipWorkshop` emite `orbit_reached` (el nivel «Nave» de Start muestra entonces un botón «Continuar»).
 - DADO el cohete incompleto CUANDO se intenta despegar ENTONCES no despega.
 - Se pueden armar las 48 combinaciones (2×2×2×2×3); apiladas con 1 px de solape coinciden pixel a pixel con `cohetes_completos` de los assets.
 
@@ -22,7 +23,7 @@ Nave: armar el cohete arrastrando piezas de pixel art (carga útil, aviónica, t
 `assembly` (`SlotAssembly`), `drag_drop` (`DragSession`), `core` (`StateMachine`), `ui` (`UiDraw`), `audio` (`Synth`).
 
 ## Cubierto por
-Lab `Nave`; `tests/features/ship/`, `tests/toolkit/assembly/`.
+Lab `Nave`; nivel `Nave` (`app/levels/ship_build_stage.gd`); `tests/features/ship/`, `tests/toolkit/assembly/`.
 
 ## Assets
 `game/assets/rocket/`: piezas x1 copiadas de "assets para cohete" y el fondo `launch_site.png` (Blender; ver `assets/rocket/source/LEEME.txt`).

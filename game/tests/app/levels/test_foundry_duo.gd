@@ -104,3 +104,16 @@ func test_rebinding_after_restart_links_the_new_run() -> void:
             break
         next_run.tick(0.05)
     check(not next_run.active.is_empty() and next_run.blocked, "la sesión nueva queda enlazada y bloqueada según la aguja")
+
+
+func test_needs_min_hits_collected_to_pass() -> void:
+    for hit: int in range(FoundryDuo.MIN_HITS):
+        check(not _duo.has_passed(), "con %d aciertos aún no pasa" % hit)
+        _wait_for_targets()
+        var spawn: FoundryRun.Spawn = _urgent()
+        var point: float = float(FoundryDuo.MELTING_POINTS[spawn.mineral])
+        _duo.temperature.gauge.push(point - _duo.temperature.gauge.value)
+        _duo.step(0.0, 0.0)
+        check(_run.collect(String(FoundryRun.NAMES[spawn.mineral])), "se recoge con la aguja en rango")
+    check_equal(_duo.hits, FoundryDuo.MIN_HITS, "cuenta los minerales recogidos")
+    check(_duo.has_passed(), "con el mínimo de aciertos pasa")

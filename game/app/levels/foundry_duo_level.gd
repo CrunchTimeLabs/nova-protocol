@@ -2,7 +2,7 @@ class_name FoundryDuoLevel
 extends Node
 ## Nivel «Fundición dúo» en pantalla dividida: a la izquierda la fundición (letras), a la derecha la temperatura
 ## (flechas arriba y abajo; Shift las acelera como ayuda). La temperatura fuera de rango bloquea la fundición; ambos comparten el reloj de la fundición.
-## F5 (o ENTER al terminar) reinicia ambos lados; Esc vuelve al menú.
+## F5 reinicia ambos lados; al terminar, ENTER pasa al siguiente nivel de la secuencia (con MIN_HITS aciertos) o reintenta; Esc vuelve al menú.
 ## Compone los componentes de cada lab (no los labs) y le da a la temperatura el arte de la fundición. Sin reglas: viven en FoundryDuo.
 
 
@@ -46,7 +46,10 @@ func _unhandled_input(event: InputEvent) -> void:
             _start()
         KEY_ENTER, KEY_KP_ENTER:
             if _duo.is_over():
-                _start()
+                if _duo.has_passed():
+                    SceneRoutes.go_to(get_tree(), Campaign.next_after(SceneRoutes.FOUNDRY_DUO_LEVEL))
+                else:
+                    _start()
 
 
 ## Arma de cero los dos lados y los enlaza (mismo azar en cada reinicio de la misma partida).

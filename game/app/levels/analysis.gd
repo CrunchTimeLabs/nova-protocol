@@ -25,7 +25,7 @@ func _on_orbit_finished() -> void:
 
 
 func _go_to_menu() -> void:
-	SceneRoutes.go_to(get_tree(), SceneRoutes.MENU)
+	SceneRoutes.go_to(get_tree(), Campaign.next_after(SceneRoutes.ANALYSIS_LEVEL))
 
 
 func _show(next: Screen, on_finished: Callable) -> void:

@@ -10,7 +10,7 @@ extends OrbitMissionLab
 const ORBIT_TIME_SCALE: float = 0.3
 
 const OUTCOME_TEXTS: Dictionary = {
-    OrbitMatch.Outcome.WON: "¡LLEGASTE A LA LUNA! Enter: reintentar",
+    OrbitMatch.Outcome.WON: "¡LLEGASTE A LA LUNA! Enter: siguiente nivel",
     OrbitMatch.Outcome.LOST: "PERDIDOS. Enter: reintentar",
 }
 
@@ -71,7 +71,7 @@ func _on_station_snapshot(_tick: int, client: MatchClient) -> void:
     _speed.text = "Velocidad: %.3f" % (client.replica as OrbitMatch).body.velocity.length()
 
 
-## Con resultado (victoria o derrota), Enter recarga el nivel en este lado; el otro lado hace lo mismo con su Enter.
+## Con resultado, Enter pasa al siguiente nivel si se ganó o recarga el nivel si se perdió; el otro lado hace lo mismo con su Enter.
 func _process(_delta: float) -> void:
     if _session == null:
         return
@@ -79,7 +79,10 @@ func _process(_delta: float) -> void:
     _outcome.text = OUTCOME_TEXTS.get(outcome, "")
     var is_pressed: bool = Input.is_physical_key_pressed(KEY_ENTER)
     if is_pressed and not _was_enter_pressed and outcome != OrbitMatch.Outcome.PLAYING:
-        SceneRoutes.go_to(get_tree(), SceneRoutes.METEOR_MISSION)
+        var next_route: String = SceneRoutes.METEOR_MISSION
+        if outcome == OrbitMatch.Outcome.WON:
+            next_route = Campaign.next_after(SceneRoutes.METEOR_MISSION)
+        SceneRoutes.go_to(get_tree(), next_route)
     _was_enter_pressed = is_pressed
 
 

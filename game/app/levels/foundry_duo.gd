@@ -22,8 +22,12 @@ const TARGET_HALF_WIDTH: float = 25.0
 ## para que el azar se note sin frenar las teclas ni chocar con el turbo.
 const WANDER_RESPONSE: float = 4.0
 const PUSH_DAMPING: float = 0.3
+## Minerales recogidos que hacen falta para pasar al siguiente nivel.
+const MIN_HITS: int = 1
 
 var temperature: TemperatureState
+## Minerales recogidos a tiempo en esta partida.
+var hits: int = 0
 var _run: FoundryRun
 var _current: FoundryRun.Spawn = null
 
@@ -43,6 +47,8 @@ func bind(run: FoundryRun) -> void:
                     source.disconnect(connection["callable"] as Callable)
     _run = run
     _current = null
+    hits = 0
+    _run.collected.connect(_on_collected)
     _run.selected.connect(_on_active_changed)
     _run.collected.connect(_on_active_changed)
     _run.expired.connect(_on_active_changed)
@@ -52,6 +58,10 @@ func bind(run: FoundryRun) -> void:
 
 func is_locked() -> bool:
     return _run != null and _run.blocked
+
+
+func has_passed() -> bool:
+    return hits >= MIN_HITS
 
 
 func is_over() -> bool:
@@ -72,6 +82,10 @@ func step(delta: float, push_direction: float, is_boosted: bool = false) -> void
 func _sync() -> void:
     temperature.sync_time(ceili(_run.remaining))
     _run.blocked = not temperature.is_in_range() and not _run.active.is_empty()
+
+
+func _on_collected(_spawn: FoundryRun.Spawn) -> void:
+    hits += 1
 
 
 func _on_active_changed(_spawn: FoundryRun.Spawn) -> void:

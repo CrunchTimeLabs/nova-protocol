@@ -1,5 +1,5 @@
 extends Control
-## Menú inicial: Start, Levels (una lista de niveles), Labs (una lista de features) y Exit.
+## Menú inicial: Start (secuencia de niveles), Old (flujo anterior), Levels (una lista de niveles), Labs (una lista de features) y Exit.
 
 
 const BACKGROUND := Color(0.02, 0.03, 0.07)
@@ -9,8 +9,10 @@ const LAB_COLUMNS := 3
 const BACK_MARGIN := Vector2(16, 16)
 ## Niveles jugables: [título, ruta de la escena].
 const LEVELS: Array = [
-	["Meteoritos", SceneRoutes.METEOR_MISSION],
+	["Recolección", SceneRoutes.COLLECTION_STAGE],
 	["Fundición dúo", SceneRoutes.FOUNDRY_DUO_LEVEL],
+	["Nave", SceneRoutes.SHIP_BUILD_STAGE],
+	["Meteoritos", SceneRoutes.METEOR_MISSION],
 	["Análisis", SceneRoutes.ANALYSIS_LEVEL],
 ]
 ## Labs de las features: [título, ruta de la escena].
@@ -81,6 +83,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show_main() -> void:
 	_show_menu("NOVA PROTOCOL", 1)
 	_add_button("Start", _on_start)
+	_add_button("Old", _on_old)
 	_add_button("Levels", _show_levels)
 	_add_button("Labs", _show_labs)
 	if not OS.has_feature("web"):          # en navegador no hay a dónde "salir"
@@ -118,6 +121,10 @@ func _add_button(text: String, handler: Callable) -> void:
 
 
 func _on_start() -> void:
+	SceneRoutes.go_to(get_tree(), Campaign.first())
+
+
+func _on_old() -> void:
 	SceneRoutes.go_to(get_tree(), SceneRoutes.EXPEDITION_LEVEL)
 
 

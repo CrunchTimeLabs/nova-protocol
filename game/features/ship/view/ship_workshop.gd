@@ -6,6 +6,8 @@ extends Control
 
 
 signal exit_requested
+## El cohete armado llegó a órbita (un nivel puede encadenar la siguiente etapa).
+signal orbit_reached
 
 const BACKGROUND := "res://assets/rocket/launch_site.png"
 const BACKGROUND_SCALE := 4.0
@@ -181,6 +183,7 @@ func _on_phase_changed(phase: HangarSession.Phase) -> void:
     match phase:
         HangarSession.Phase.IN_ORBIT:
             _sfx.play(ShipSfx.Sound.ORBIT)
+            orbit_reached.emit()
         HangarSession.Phase.BUILDING, HangarSession.Phase.LAUNCHING:
             pass
 

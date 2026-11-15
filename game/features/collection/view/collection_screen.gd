@@ -6,6 +6,8 @@ extends Control
 
 signal restart_requested
 signal exit_requested
+## Enter al terminar, solo si el anfitrión activa `can_continue` (un nivel que encadena la siguiente etapa).
+signal continue_requested
 
 const BACKGROUND := Color(0.035, 0.035, 0.045)
 const TOP_BAR := 56.0
@@ -32,6 +34,8 @@ const RAIN_SHAKE := 9.0
 ## Un derrumbe que tapa varios pasos a la vez trae una sola lluvia.
 const RAIN_COOLDOWN := 0.5
 
+## Si es verdadero, el cuadro final ofrece «Enter: continuar» y Enter emite `continue_requested`.
+var can_continue: bool = false
 var _session: CollectionSession
 var _sfx: CollectionSfx
 var _card: TutorialCard
@@ -110,7 +114,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_ESCAPE:
             exit_requested.emit()
         KEY_ENTER, KEY_KP_ENTER:
-            if _session.active_lesson() != null:
+            if can_continue and _session.phase() == CollectionSession.Phase.FINISHED:
+                continue_requested.emit()
+            elif _session.active_lesson() != null:
                 _sfx.play(CollectionSfx.Sound.CLICK)
                 _session.skip_step()
 
@@ -192,7 +198,7 @@ func _draw_end() -> void:
         UiDraw.text_centered(self, center, y, "%s: %d" % [CollectionRun.MINERAL_NAMES[mineral], tally.count(mineral)], 18, color, true)
         y += 28.0
     UiDraw.text_centered(self, center, y + 6, "Al almacén para la fundición: %d" % tally.total(), 18, TEXT)
-    UiDraw.text_centered(self, center, box.end.y - 34, "R: otro laberinto    Esc: dificultad", 16, HINT, true)
+    UiDraw.text_centered(self, center, box.end.y - 34, "Enter: continuar    R: otro laberinto    Esc: dificultad" if can_continue else "R: otro laberinto    Esc: dificultad", 16, HINT, true)
 
 
 func _update_impacts(delta: float) -> void:

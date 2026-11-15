@@ -13,7 +13,7 @@ Recolección: el cochecito recorre un laberinto dinámico recogiendo minerales p
 - DADO el cochecito descentrado frente a un pasillo abierto CUANDO empuja hacia él ENTONCES se centra solo y entra (asistencia de esquina).
 - DADO un mineral CUANDO el cochecito pasa por encima ENTONCES se recoge solo y suma al almacén.
 - DADO un derrumbe CUANDO cae ENTONCES las rocas tapan sus pasos el tiempo del nivel, nunca encima del cochecito ni cortando su salida; el primero abre su lección, que se cierra al despejarse.
-- DADO el cochecito CUANDO entra en la rampa ENTONCES termina con el total. R: otro laberinto del mismo nivel (solo salen las lecciones no vistas). Esc: volver a la dificultad.
+- DADO el cochecito CUANDO entra en la rampa ENTONCES termina con el total. R: otro laberinto del mismo nivel (solo salen las lecciones no vistas). Esc: volver a la dificultad. Si el anfitrión activa `can_continue` (nivel «Recolección» de Start), el cuadro final añade «Enter: continuar» y Enter emite `continue_requested`.
 
 ## Qué reutilizar
 - `CollectionLevel` (datos de cada dificultad).
@@ -27,4 +27,4 @@ Recolección: el cochecito recorre un laberinto dinámico recogiendo minerales p
 `maze` (`Maze`, `MazeCaveIns`), `spawn` (`TimedSpawns`), `inventory` (`Tally`), `tutorial` (`TutorialSteps`), `time` (`ChanceWindow`), `core` (`StateMachine`, `GameRandom`), `ui` (`UiDraw`), `audio` (`Synth`).
 
 ## Cubierto por
-Lab `Recolección`; `tests/features/collection/`.
+Lab `Recolección`; nivel `Recolección` (`app/levels/collection_stage.gd`, primera etapa de Start); `tests/features/collection/`.
